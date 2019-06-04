@@ -1,0 +1,41 @@
+---
+- hosts: backup
+  tasks:
+    - name: Add daily backup cronjob.
+      cron:
+        name: "Daily backup"
+        job: >
+          /usr/local/bin/tractorbeam.sh daily
+        hour: "{{ _daily.hour | default('0') }}"
+        minute: "{{ _daily.minute | default('0') }}"
+        disabled: "{{ _daily.disabled | default(false) }}"
+        user: "backup"
+      vars:
+        _cron: "{{ tractorbeam.cron | default({}) }}"
+        _daily: "{{ _cron.daily | default({}) }}"
+    - name: Add weekly backup cronjob.
+      cron:
+        name: "Weekly backup"
+        job: >
+          /usr/local/bin/tractorbeam.sh weekly
+        weekday: "{{ _weekly.weekday | default('0') }}"
+        hour: "{{ _weekly.hour | default('2') }}"
+        minute: "{{ _weekly.minute | default('0') }}"
+        disabled: "{{ _weekly.disabled | default(false) }}"
+        user: "backup"
+      vars:
+        _cron: "{{ tractorbeam.cron | default({}) }}"
+        _weekly: "{{ _cron.weekly | default({}) }}"
+    - name: Add monthly backup cronjob.
+      cron:
+        name: "Monthly backup"
+        job: >
+          /usr/local/bin/tractorbeam.sh monthly
+        day: "{{ _monthly.day | default('1') }}"
+        hour: "{{ _monthly.hour | default('4') }}"
+        minute: "{{ _monthly.minute | default('0') }}"
+        disabled: "{{ _monthly.disabled | default(false) }}"
+        user: "backup"
+      vars:
+        _cron: "{{ tractorbeam.cron | default({}) }}"
+        _monthly: "{{ _cron.monthly | default({}) }}"

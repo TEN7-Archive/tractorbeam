@@ -1,0 +1,7 @@
+---
+- name: delete temp items
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ _run_temp_dir.path }}"

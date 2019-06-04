@@ -1,0 +1,47 @@
+---
+- hosts: backup
+  roles:
+    - ten7.flightdeck_base
+  tasks:
+    - name: Install MySQL client.
+      apk:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - "py3-mysqlclient"
+        - "py3-pip"
+        - "mariadb-client"
+        - "dcron"
+      notify:
+        - clear apk cache
+    - name: Install the AWS cli
+      pip:
+        name:
+          - "botocore"
+          - "boto3"
+          - "awscli"
+        extra_args: "--ignore-installed"
+    - name: Deploy key scripts.
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "backup"
+        group: "backup"
+        mode: "u=rx,g=rx,o="
+      loop:
+        - src: "templates/tractorbeam.sh.j2"
+          dest: "/usr/local/bin/tractorbeam.sh"
+    - name: Change the crontab ownership.
+      file:
+        path: "/usr/bin/crontab"
+        group: "cron"
+        mode: "4750"
+  handlers:
+    - name: clear apk cache
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/*"
+        - "/var/cache/apk/*"

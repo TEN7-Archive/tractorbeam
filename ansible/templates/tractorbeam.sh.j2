@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+case "$1" in
+  daily)
+    if [ -f "/secrets/tractorbeam.yml" ]; then
+      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-daily.yml
+    else
+      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-daily.yml
+    fi
+    ;;
+  weekly)
+    if [ -f "/secrets/tractorbeam.yml" ]; then
+      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-weekly.yml
+    else
+      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-weekly.yml
+    fi
+    ;;
+  monthly)
+    if [ -f "/secrets/tractorbeam.yml" ]; then
+      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-monthly.yml
+    else
+      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-monthly.yml
+    fi
+    ;;
+  *)
+    echo $"Usage: $0 {daily|weekly|monthly}"
+    exit 1
+
+esac

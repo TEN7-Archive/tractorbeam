@@ -1,0 +1,22 @@
+---
+flighdeck_motd_name: Backup 10.1
+
+flightdeck_groups:
+  - name: "backup"
+
+flightdeck_users:
+  - name: "backup"
+    group: "backup"
+    groups:
+      - "cron"
+    home: "/home/backup"
+
+flightdeck_run_commands: |
+  if [ -f "/secrets/tractorbeam.yml" ]; then
+    ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/run.yml {{ flightdeck_debug | ternary('-vvvv', '') }}
+  else
+    ansible-playbook -i /ansible/inventories/all.ini /ansible/run.yml {{ flightdeck_debug | ternary('-vvvv', '') }}
+  fi
+
+flightdeck_root_prompt: '\u@tractorbeam:\w# '
+flightdeck_user_prompt: '\u@tractorbeam:\w$ '

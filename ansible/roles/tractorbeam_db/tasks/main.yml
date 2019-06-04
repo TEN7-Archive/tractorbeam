@@ -1,0 +1,50 @@
+---
+- name: Generate the backup timestamp.
+  set_fact:
+    _backup_timestamp: "{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
+- name: Create a temp directory to store files needed by the run
+  tempfile:
+    state: directory
+    prefix: "tractorbeam_db-run-{{ _backup_timestamp }}"
+  register: _run_temp_dir
+  notify:
+    - delete temp items
+- name: Backup databases
+  mysql_db:
+    state: dump
+    name: "{{ item.name }}"
+    target: "{{ _run_temp_dir.path }}/{{ item.name }}_{{ _backup_timestamp }}.sql.gz"
+    login_host: "{{ item.host | default('localhost') }}"
+    login_port: "{{ item.port | default('3306') | int }}"
+    login_user: "{{ item.user | default(omit) }}"
+    login_password: "{{ item.password | default(omit) }}"
+  loop: "{{ tractorbeam.databases }}"
+- name: Push backups to S3
+  aws_s3:
+    bucket: "{{ item.bucket }}"
+    object: "{{ item.prefix | default('') }}/db-backups/{{ tractorbeam_db_scope | default('') }}/{{ item.name }}_{{ _backup_timestamp }}.sql.gz"
+    src: "{{ _run_temp_dir.path }}/{{ item.name }}_{{ _backup_timestamp }}.sql.gz"
+    mode: put
+    s3_url: "{{ item.endpoint | default(omit) }}"
+    region: "{{ item.region | default(omit) }}"
+    encrypt: no
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ item.access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ item.secret_key }}"
+  loop: "{{ tractorbeam.databases }}"
+- name: Set an expiry for backups
+  s3_lifecycle:
+    name: "{{ item.bucket }}"
+    expiration_days: "{{ _tractorbeam_db_expiries[tractorbeam_db_scope] }}"
+    prefix: "/{{ item.prefix | default('') }}/db-backups/{{ tractorbeam_db_scope | default('') }}/"
+    ec2_url: "{{ item.endpoint | default(omit) }}"
+    region: "{{ item.region | default(omit) }}"
+    status: enabled
+    state: present
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ item.access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ item.secret_key }}"
+  when:
+    - tractorbeam_db_scope is defined
+    - _tractorbeam_db_expiries[tractorbeam_db_scope] | default(false)
+  loop: "{{ tractorbeam.databases }}"
