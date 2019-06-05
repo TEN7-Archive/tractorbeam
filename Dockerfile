@@ -27,4 +27,4 @@ USER backup
 
 # Set the entrypoint and default command.
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["/usr/sbin/crond", "-f"]
+CMD ["tractorbeam"]

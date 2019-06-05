@@ -19,6 +19,7 @@
     login_user: "{{ item.user | default(omit) }}"
     login_password: "{{ item.password | default(omit) }}"
   loop: "{{ tractorbeam.databases }}"
+  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
 - name: Push backups to S3
   aws_s3:
     bucket: "{{ item.bucket }}"
@@ -32,10 +33,11 @@
     AWS_ACCESS_KEY_ID: "{{ item.access_key }}"
     AWS_SECRET_ACCESS_KEY: "{{ item.secret_key }}"
   loop: "{{ tractorbeam.databases }}"
+  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
 - name: Set an expiry for backups
   s3_lifecycle:
     name: "{{ item.bucket }}"
-    expiration_days: "{{ _tractorbeam_db_expiries[tractorbeam_db_scope] }}"
+    expiration_days: "{{ tractorbeam_db_expiries[tractorbeam_db_scope] }}"
     prefix: "/{{ item.prefix | default('') }}/db-backups/{{ tractorbeam_db_scope | default('') }}/"
     ec2_url: "{{ item.endpoint | default(omit) }}"
     region: "{{ item.region | default(omit) }}"
@@ -46,5 +48,6 @@
     AWS_SECRET_ACCESS_KEY: "{{ item.secret_key }}"
   when:
     - tractorbeam_db_scope is defined
-    - _tractorbeam_db_expiries[tractorbeam_db_scope] | default(false)
+    - tractorbeam_db_expiries[tractorbeam_db_scope] | default(false)
   loop: "{{ tractorbeam.databases }}"
+  no_log: "{{ tractorbeam_db_nolog | default(true) }}"

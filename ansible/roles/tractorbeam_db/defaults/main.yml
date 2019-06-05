@@ -1,5 +1,7 @@
 ---
-_tractorbeam_db_expiries:
+tractorbeam_db_expiries:
   daily: 7
   weekly: 31
   monthly: 366
+
+tractorbeam_db_nolog: true

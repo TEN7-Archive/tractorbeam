@@ -12,7 +12,6 @@
         - "py3-mysqlclient"
         - "py3-pip"
         - "mariadb-client"
-        - "dcron"
       notify:
         - clear apk cache
     - name: Install the AWS cli
@@ -31,12 +30,7 @@
         mode: "u=rx,g=rx,o="
       loop:
         - src: "templates/tractorbeam.sh.j2"
-          dest: "/usr/local/bin/tractorbeam.sh"
-    - name: Change the crontab ownership.
-      file:
-        path: "/usr/bin/crontab"
-        group: "cron"
-        mode: "4750"
+          dest: "/usr/local/bin/tractorbeam"
   handlers:
     - name: clear apk cache
       file:
