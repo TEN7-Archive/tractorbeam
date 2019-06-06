@@ -1,25 +1,40 @@
 #!/usr/bin/env bash
 
+TRACTORBEAM_LOG_LEVEL=${TRACTORBEAM_LOG_LEVEL:-error}
+case "$TRACTORBEAM_LOG_LEVEL" in
+  error)
+    ANSIBLE_DEBUG_SWITCH=''
+    ;;
+  verbose)
+    ANSIBLE_DEBUG_SWITCH='-v'
+    ;;
+  debug)
+    ANSIBLE_DEBUG_SWITCH='-vvvv'
+    ;;
+  *)
+    ANSIBLE_DEBUG_SWITCH=''
+esac
+
 case "$1" in
   daily)
     if [ -f "/secrets/tractorbeam.yml" ]; then
-      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-daily.yml
+      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-daily.yml $ANSIBLE_DEBUG_SWITCH
     else
-      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-daily.yml
+      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-daily.yml $ANSIBLE_DEBUG_SWITCH
     fi
     ;;
   weekly)
     if [ -f "/secrets/tractorbeam.yml" ]; then
-      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-weekly.yml
+      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-weekly.yml $ANSIBLE_DEBUG_SWITCH
     else
-      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-weekly.yml
+      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-weekly.yml $ANSIBLE_DEBUG_SWITCH
     fi
     ;;
   monthly)
     if [ -f "/secrets/tractorbeam.yml" ]; then
-      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-monthly.yml
+      ansible-playbook -i /ansible/inventories/all.ini -e "@/secrets/tractorbeam.yml" /ansible/backup-monthly.yml $ANSIBLE_DEBUG_SWITCH
     else
-      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-monthly.yml
+      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-monthly.yml $ANSIBLE_DEBUG_SWITCH
     fi
     ;;
   *)
