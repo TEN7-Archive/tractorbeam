@@ -29,6 +29,7 @@
     s3_url: "{{ item.endpoint | default(omit) }}"
     region: "{{ item.region | default(omit) }}"
     encrypt: no
+    permission: private
   environment:
     AWS_ACCESS_KEY_ID: "{{ item.access_key }}"
     AWS_SECRET_ACCESS_KEY: "{{ item.secret_key }}"
