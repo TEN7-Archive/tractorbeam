@@ -36,14 +36,15 @@
     _list_bucket_sorted: "{{ _list_bucket.s3_keys | select('regex', _regex) | list | sort }}"
   vars:
     _regex: "{{ _bucket.name }}_[0-9]{14}\\.sql\\.gz"
+  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
 - name: Delete old backups
-  debug:
-    msg: |
-      bucket: "{{ _bucket.bucket }}"
-      prefix: "{{ _bucket.prefix }}/db-backups/{{ tractorbeam_db_scope | default('') }}"
-      mode: delObj
-      object: "{{ item }}"
-      aws_access_key: "{{ _bucket.access_key }}"
-      aws_secret_key: "{{ _bucket.secret_key }}"
-      s3_url: "{{ _bucket.endpoint | default(omit) }}"
+  aws_s3:
+    bucket: "{{ _bucket.bucket }}"
+    prefix: "{{ _bucket.prefix }}/db-backups/{{ tractorbeam_db_scope | default('') }}"
+    mode: delObj
+    object: "{{ item }}"
+    aws_access_key: "{{ _bucket.access_key }}"
+    aws_secret_key: "{{ _bucket.secret_key }}"
+    s3_url: "{{ _bucket.endpoint | default(omit) }}"
   loop: "{{ _list_bucket_sorted[:-(_retain_count | int)] }}"
+  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
