@@ -9,46 +9,11 @@
   register: _run_temp_dir
   notify:
     - delete temp items
-- name: Backup databases
-  mysql_db:
-    state: dump
-    name: "{{ item.name }}"
-    target: "{{ _run_temp_dir.path }}/{{ item.name }}_{{ _backup_timestamp }}.sql.gz"
-    login_host: "{{ item.host | default('localhost') }}"
-    login_port: "{{ item.port | default('3306') | int }}"
-    login_user: "{{ item.user | default(omit) }}"
-    login_password: "{{ item.password | default(omit) }}"
+- name: Work with backups
+  include_tasks: "backup.yml"
+  vars:
+    _retain_count: "{{ tractorbeam_db_expiries[tractorbeam_db_scope] }}"
   loop: "{{ tractorbeam.databases }}"
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
-- name: Push backups to S3
-  aws_s3:
-    bucket: "{{ item.bucket }}"
-    object: "{{ item.prefix | default('') }}/db-backups/{{ tractorbeam_db_scope | default('') }}/{{ item.name }}_{{ _backup_timestamp }}.sql.gz"
-    src: "{{ _run_temp_dir.path }}/{{ item.name }}_{{ _backup_timestamp }}.sql.gz"
-    mode: put
-    s3_url: "{{ item.endpoint | default(omit) }}"
-    region: "{{ item.region | default(omit) }}"
-    encrypt: no
-    permission: private
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ item.access_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ item.secret_key }}"
-  loop: "{{ tractorbeam.databases }}"
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
-- name: Set an expiry for backups
-  s3_lifecycle:
-    name: "{{ item.bucket }}"
-    expiration_days: "{{ tractorbeam_db_expiries[tractorbeam_db_scope] }}"
-    prefix: "/{{ item.prefix | default('') }}/db-backups/{{ tractorbeam_db_scope | default('') }}/"
-    ec2_url: "{{ item.endpoint | default(omit) }}"
-    region: "{{ item.region | default(omit) }}"
-    status: enabled
-    state: present
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ item.access_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ item.secret_key }}"
-  when:
-    - tractorbeam_db_scope is defined
-    - tractorbeam_db_expiries[tractorbeam_db_scope] | default(false)
-  loop: "{{ tractorbeam.databases }}"
+  loop_control:
+    loop_var: _bucket
   no_log: "{{ tractorbeam_db_nolog | default(true) }}"

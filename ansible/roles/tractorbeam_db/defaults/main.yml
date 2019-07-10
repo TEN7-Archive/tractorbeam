@@ -1,4 +1,7 @@
 ---
+tractorbeam:
+  databases: []
+
 tractorbeam_db_expiries:
   daily: 7
   weekly: 31
