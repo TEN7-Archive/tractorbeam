@@ -41,7 +41,7 @@
   aws_s3:
     bucket: "{{ _bucket.bucket }}"
     prefix: "{{ _bucket.prefix }}/db-backups/{{ tractorbeam_db_scope | default('') }}"
-    mode: delObj
+    mode: delobj
     object: "{{ item }}"
     aws_access_key: "{{ _bucket.access_key }}"
     aws_secret_key: "{{ _bucket.secret_key }}"
