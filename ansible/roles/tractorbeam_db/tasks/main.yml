@@ -9,11 +9,19 @@
   register: _run_temp_dir
   notify:
     - delete temp items
-- name: Work with backups
-  include_tasks: "backup.yml"
+- name: Work with databases
+  include_tasks: "databases.yml"
   vars:
     _retain_count: "{{ tractorbeam_db_expiries[tractorbeam_db_scope] }}"
-  loop: "{{ tractorbeam.databases }}"
+  loop: "{{ tractorbeam.databases | default([]) }}"
   loop_control:
-    loop_var: _bucket
+    loop_var: _backup
+  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
+- name: Work with platform.sh databases
+  include_tasks: "platformshDatabases.yml"
+  vars:
+    _retain_count: "{{ tractorbeam_db_expiries[tractorbeam_db_scope] }}"
+  loop: "{{ tractorbeam.platformshDatabases | default([]) }}"
+  loop_control:
+    loop_var: _backup
   no_log: "{{ tractorbeam_db_nolog | default(true) }}"

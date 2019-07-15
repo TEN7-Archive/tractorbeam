@@ -3,15 +3,30 @@
   roles:
     - ten7.flightdeck_base
   tasks:
-    - name: Install MySQL client.
+    - name: Install necessary software.
       apk:
         name: "{{ item }}"
         state: present
         update_cache: yes
       loop:
+        - "curl"
+        - "git"
+        - "patch"
+        - "mariadb-client"
+        - "openssh-client"
+        - "php7"
+        - "php7-curl"
+        - "php7-dom"
+        - "php7-json"
+        - "php7-mbstring"
+        - "php7-openssl"
+        - "php7-pcntl"
+        - "php7-posix"
+        - "php7-phar"
+        - "php7-tokenizer"
         - "py3-mysqlclient"
         - "py3-pip"
-        - "mariadb-client"
+        - "rsync"
       notify:
         - clear apk cache
     - name: Install the AWS cli
@@ -21,6 +36,16 @@
           - "boto3"
           - "awscli"
         extra_args: "--ignore-installed"
+    - name: Download the Platform.sh cli
+      get_url:
+        url: "{{ platformsh_cli_url }}"
+        dest: "/usr/local/bin/platform"
+        owner: "backup"
+        group: "backup"
+        mode: "u=rx,g=rx,o="
+    - name: Install Platform.sh cli
+      shell: >
+        /usr/local/bin/platform self:install
     - name: Deploy key scripts.
       template:
         src: "{{ item.src }}"
@@ -31,6 +56,19 @@
       loop:
         - src: "templates/tractorbeam.sh.j2"
           dest: "/usr/local/bin/tractorbeam"
+    - name: Install Pantheon Terminus
+      include_role:
+        name: "socketwench.pantheon_terminus"
+    - name: Set host key checking to accept new.
+      lineinfile:
+        path: "/home/backup/.ssh/config"
+        regexp: "StrictHostKeyChecking="
+        line: "StrictHostKeyChecking=accept-new"
+        state: present
+        create: yes
+        owner: "backup"
+        group: "backup"
+        mode: "u=rx,g=rx,o="
   handlers:
     - name: clear apk cache
       file:
