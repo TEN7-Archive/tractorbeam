@@ -16,7 +16,7 @@
   loop: "{{ tractorbeam.databases | default([]) }}"
   loop_control:
     loop_var: _backup
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - name: Work with platform.sh databases
   include_tasks: "platformshDatabases.yml"
   vars:
@@ -24,4 +24,4 @@
   loop: "{{ tractorbeam.platformshDatabases | default([]) }}"
   loop_control:
     loop_var: _backup
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"

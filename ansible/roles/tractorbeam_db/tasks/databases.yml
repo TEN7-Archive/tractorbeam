@@ -13,7 +13,7 @@
       {% else %}\
       {{ _backup.password | default(omit) }}\
       {% endif %}"
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - name: Push backup to S3
   aws_s3:
     bucket: "{{ _backup.bucket }}"
@@ -36,7 +36,7 @@
       {% else %}\
       {{ _backup.secretKey | default(omit) }}\
       {% endif %}"
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - name: Get list of files
   aws_s3:
     bucket: "{{ _backup.bucket }}"
@@ -61,7 +61,7 @@
     _list_backup_sorted: "{{ _list_backup.s3_keys | select('regex', _regex) | list | sort }}"
   vars:
     _regex: "{{ _backup.name }}_[0-9]{14}\\.sql\\.gz"
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - name: Delete old backups
   aws_s3:
     bucket: "{{ _backup.bucket }}"
@@ -82,4 +82,4 @@
       {% endif %}"
     s3_url: "{{ _backup.endpoint | default(omit) }}"
   loop: "{{ _list_backup_sorted[:-(_retain_count | int)] }}"
-  no_log: "{{ tractorbeam_db_nolog | default(true) }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
