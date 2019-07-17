@@ -1,12 +1,12 @@
-# Tractorbeam
+# Tractorbeam Backup
 
-Open source, multi-tier backups to S3.
+Open source, multi-tier website backups to S3.
 
 Tractorbeam is Docker container that can backup data from a variety of sources to an S3-compatible object store such as AWS, DigitalOcean Spaces, Google Cloud, Ceph, and more.  All libraries and utilities are already in the container, so there's nothing more to install.
 
 ## Multi-tier backups
 
-This container also creates "multi-tier" backups in a best-pracitce fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
+This container also creates "multi-tier" backups in a best-practice fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
 
 ```
 my/custom/prefix
@@ -24,7 +24,7 @@ Each directory only retains a set number of files by default:
 * **weekly** stores weekly backups, taken once a week, up to the last 4 weeks.
 * **monthly** stores monthly backups, taken once a week, up to the last 12 months.
 
-This reduces the overall amount of storage you require, while still providing you sufficent coverage for auditing or disaster recovery.
+This reduces the overall amount of storage you require, while still providing you sufficient coverage for auditing or disaster recovery.
 
 ## Use
 
