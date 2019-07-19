@@ -92,3 +92,4 @@
     s3_url: "{{ _backup.endpoint | default(omit) }}"
   loop: "{{ _list_backup_sorted[:-(_retain_count | int)] }}"
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- include_tasks: "healhcheck.yml"

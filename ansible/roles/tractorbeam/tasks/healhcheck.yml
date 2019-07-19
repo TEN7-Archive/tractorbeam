@@ -1,0 +1,9 @@
+---
+- name: Send ping to healthchecks.io
+  uri:
+    url: "{{ _backup.healthcheckUrl }}"
+    force: yes
+    timeout: "10"
+    validate_certs: no
+  when:
+    - _backup.healthcheckUrl is defined

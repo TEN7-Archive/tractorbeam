@@ -115,12 +115,8 @@ If using AWS S3 for the target bucket, you should specify the region name in you
 
 ```yaml
 tractorbeam:
-  databases:
-    - name: "flight_deck_test_db"
-      user: "flying_red_panda"
-      password: "weeee"
-      host: "mysql.database.svc.cluster.local"
-      bucket: "my_bucket_name"
+  exampleBackupType:
+    - bucket: "my_bucket_name"
       region: "us-east-1"
       prefix: "my/custom/prefix"
       accessKey: "abcef123456"
@@ -137,12 +133,8 @@ You may also specify an alternate S3 endpoint to use any S3-compatible object st
 
 ```yaml
 tractorbeam:
-  databases:
-    - name: "flight_deck_test_db"
-      user: "flying_red_panda"
-      password: "weeee"
-      host: "mysql.database.svc.cluster.local"
-      bucket: "my_bucket_name"
+  exampleBackupType:
+    - bucket: "my_bucket_name"
       prefix: "my/custom/prefix"
       accessKey: "abcef123456"
       secretKey: "abcef123456"
@@ -154,6 +146,21 @@ Where:
 * **endpoint** is the S3 API endpoint URL for your S3-compatible object store.
 
 Depending on your custom endpoint, you may or may not need to specify a `region` as well.
+
+### Completion pings
+
+For all backups, Tractorbeam can send a ping to [Healthchecks.io](https://healthchecks.io/) on completion. Healthchecks.io is an open source, periodic task monitoring system. This can be used to track the completion of each backup simply by providing a URL:
+
+```yaml
+tractorbeam:
+  exampleBackupType:
+    - bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
+      healthcheckUrl: "https://hc-ping.com/abcdefghijklmnop1234567890"
+```
 
 ## Backing up databases
 

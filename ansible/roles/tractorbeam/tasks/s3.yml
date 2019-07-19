@@ -80,3 +80,4 @@
     state: absent
   when:
     - _s3_temp_dir.path is defined
+- include_tasks: "healhcheck.yml"

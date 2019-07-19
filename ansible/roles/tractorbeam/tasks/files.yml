@@ -61,3 +61,4 @@
     state: absent
   when:
     - _files_temp_dir.path is defined
+- include_tasks: "healhcheck.yml"
