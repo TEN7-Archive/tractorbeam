@@ -1,0 +1,46 @@
+---
+- name: Generate the backup timestamp.
+  set_fact:
+    _backup_timestamp: "{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
+- name: Create a temp directory to store files needed by the run
+  tempfile:
+    state: directory
+    prefix: "tractorbeam-run-{{ _backup_timestamp }}"
+  register: _run_temp_dir
+  notify:
+    - delete temp items
+- name: Work with databases
+  include_tasks: "databases.yml"
+  vars:
+    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+  loop: "{{ tractorbeam.databases | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Work with platform.sh databases
+  include_tasks: "platformshDatabases.yml"
+  vars:
+    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+  loop: "{{ tractorbeam.platformshDatabases | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Work with file backups
+  include_tasks: "files.yml"
+  vars:
+    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+  loop: "{{ tractorbeam.files | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+#
+# S3 to S3 backups always run last!
+#
+- name: Work with s3 backups
+  include_tasks: "s3.yml"
+  vars:
+    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+  loop: "{{ tractorbeam.s3 | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"

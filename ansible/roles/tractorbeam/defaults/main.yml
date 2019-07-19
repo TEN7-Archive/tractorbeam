@@ -1,0 +1,18 @@
+---
+tractorbeam:
+  databases: []
+
+tractorbeam_expiries:
+  daily: 7
+  weekly: 31
+  monthly: 366
+
+tractorbeam_files_excludes:
+  - ".git"
+  - "css/*"
+  - "js/*"
+  - "imagecache/*"
+  - "styles/*"
+  - "php/*"
+  - "backup_migrate/*"
+  - "private/backup_migrate/*"

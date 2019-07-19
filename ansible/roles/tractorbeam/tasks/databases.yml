@@ -17,7 +17,7 @@
 - name: Push backup to S3
   aws_s3:
     bucket: "{{ _backup.bucket }}"
-    object: "{{ _backup.prefix | default('') }}/db-backups/{{ tractorbeam_db_scope | default('') }}/{{ _backup.name }}_{{ _backup_timestamp }}.sql.gz"
+    object: "{{ _backup.prefix | default('') }}/{{ tractorbeam_scope | default('') }}/{{ _backup.name }}_{{ _backup_timestamp }}.sql.gz"
     src: "{{ _run_temp_dir.path }}/{{ _backup.name }}_{{ _backup_timestamp }}.sql.gz"
     mode: put
     s3_url: "{{ _backup.endpoint | default(omit) }}"
@@ -40,7 +40,7 @@
 - name: Get list of files
   aws_s3:
     bucket: "{{ _backup.bucket }}"
-    prefix: "{{ _backup.prefix }}/db-backups/{{ tractorbeam_db_scope | default('') }}"
+    prefix: "{{ _backup.prefix }}/{{ tractorbeam_scope | default('') }}"
     mode: list
     aws_access_key: "\
       {% if _backup.accessKeyFile is defined %}\
@@ -65,7 +65,7 @@
 - name: Delete old backups
   aws_s3:
     bucket: "{{ _backup.bucket }}"
-    prefix: "{{ _backup.prefix }}/db-backups/{{ tractorbeam_db_scope | default('') }}"
+    prefix: "{{ _backup.prefix }}/{{ tractorbeam_scope | default('') }}"
     mode: delobj
     object: "{{ item }}"
     aws_access_key: "\

@@ -1,0 +1,63 @@
+---
+- name: Create a temp directory to stage the backup
+  tempfile:
+    state: directory
+    prefix: "files-{{ _backup.bucket }}-{{ _backup_timestamp }}"
+  register: _files_temp_dir
+  when:
+    - _backup.cacheDir is not defined
+- name: Sync files from remote
+  shell: >
+    rsync
+    -az
+    -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    {% for _exclude in _backup.excludes | default(tractorbeam_files_excludes) %}
+    --exclude={{ _exclude }}{{ ' ' }}
+    {% endfor %}
+    {% if _backup.delete | default(true) %}
+    --delete
+    {% endif %}
+    --force
+    --chown=backup:backup
+    {{ _backup.user }}@{{ _backup.src }}:{{ _backup.path }}/
+    {{ _backup.cacheDir | default(_files_temp_dir.path) }}
+- name: Sync directory to target S3
+  shell: >
+    aws s3 sync
+    {% for _exclude in _backup.excludes | default(tractorbeam_files_excludes) %}
+    --exclude "{{ _exclude }}"{{ '' }}
+    {% endfor %}
+    {% if _backup.delete | default(true) %}
+    --delete
+    {% endif %}
+    {% if (flightdeck_debug | default(false)) != true %}
+    --quiet
+    --only-show-errors
+    {% endif %}
+    {% if _backup.endpoint is defined %}
+    --endpoint-url {{ _backup.endpoint }}
+    {% endif %}
+    {% if _backup.region is defined %}
+    --region {{ _backup.region }}
+    {% endif %}
+    {{ _backup.cacheDir | default(_files_temp_dir.path) }}/
+    s3://{{ _backup.bucket }}/{{ _backup.prefix }}
+  environment:
+    AWS_ACCESS_KEY_ID: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    AWS_SECRET_ACCESS_KEY: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+- name: delete stage directory
+  file:
+    path: "_files_temp_dir.path"
+    state: absent
+  when:
+    - _files_temp_dir.path is defined

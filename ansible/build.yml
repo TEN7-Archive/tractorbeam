@@ -69,6 +69,13 @@
         owner: "backup"
         group: "backup"
         mode: "u=rx,g=rx,o="
+    - name: Create the backup directory
+      file:
+        path: "/backups"
+        state: directory
+        owner: "backup"
+        group: "backup"
+        mode: "u=rwx,g=rwx,o="
   handlers:
     - name: clear apk cache
       file:

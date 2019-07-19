@@ -10,13 +10,12 @@ This container also creates "multi-tier" backups in a best-practice fashion. Ins
 
 ```
 my/custom/prefix
-└── db-backups
-    ├── daily
-    │   ├── flight_deck_test_db_20XX0101120000.sql.gz
-    │   ...
-    │   └── flight_deck_test_db_20XX0107120000.sql.gz
-    ├── monthly
-    └── weekly
+  ├── daily
+  │   ├── flight_deck_test_db_20XX0101120000.sql.gz
+  │   ...
+  │   └── flight_deck_test_db_20XX0107120000.sql.gz
+  ├── monthly
+  └── weekly
 ```
 
 Each directory only retains a set number of files by default:
@@ -57,23 +56,117 @@ For Docker Compose, you can attach a `docker-compose run` command to the Docker 
 This container does not use environment variables for configuration. Instead, it relies on the `tractorbeam.yml` file:
 
 ```yaml
----
 tractorbeam:
   databases: {}
   platformshDatabases: {}
+  files: {}
+  s3: {}
 ```
 
 Where:
 
 * **databases** is a list of locally accessible MySQL/MariaDB databases to back up to S3.
 * **platformshDatabases** is a list of [Platform.sh](https://platform.sh) database relationships to back up to S3.
+* **files** is a list SSH-accessible (SSH, SFTP, rsync-over-ssh) directories to backup to S3.
+* **s3** is a list of backups to duplicate files between S3 buckets.
 
-## Backing up MySQL/MariaDB
+### Specifying the backup target
+
+All backup types back up to an S3-compatible object store such as AWS S3, DigitalOcean Spaces, Ceph, Google Cloud, etc.. As such, every item in each list has the following items:
+
+```yaml
+tractorbeam:
+  exampleBackupType:
+    - bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+```
+
+* **bucket** is the S3 bucket name used to store the backup. Required.
+* **prefix** is the prefix to use when saving the backup. Optional, defaults to an empty string.
+* **accessKey** is the S3 access key. Optional if `accessKeyFile` is defined.
+* **secretKey** is the S3 secret key. Optional if `secretKeyFile` is defined.
+
+
+### Using separate files for credentials
+
+Sometimes, you may wish to keep certain credentials in separate files from the rest of the configuration. One such case is if you want to keep `tractorbeam.yml` in a Kubernetes ConfigMap, but store bucket keys, database passwords, SSH keys, and other critical credentials in a Secret instead for additional security.
+
+For these, you can use the `*File` version:
+
+```yaml
+tractorbeam:
+  exampleBackupType:
+    - bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKeyFile: "/secrets/my_bucket_name_accessKey.txt"
+      secretKeyFile: "/secrets/my_bucket_name_secretKey.txt"
+```
+
+Where:
+
+* **accessKeyFile** is the full path inside the container to a file containing the S3 bucket access key.
+* **secretKeyFile** is the full path inside the container to a file containing the S3 bucket secret key.
+
+### Specifying the region
+
+If using AWS S3 for the target bucket, you should specify the region name in your configuration:
+
+```yaml
+tractorbeam:
+  databases:
+    - name: "flight_deck_test_db"
+      user: "flying_red_panda"
+      password: "weeee"
+      host: "mysql.database.svc.cluster.local"
+      bucket: "my_bucket_name"
+      region: "us-east-1"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+```
+
+Where:
+
+* **region** is the AWS S3 region in which your bucket resides. Optional.
+
+### Using alternate endpoints
+
+You may also specify an alternate S3 endpoint to use any S3-compatible object store such as DigitalOcean Spaces, Ceph, Google Cloud, and so on. To do so, include the `endpoint` key:
+
+```yaml
+tractorbeam:
+  databases:
+    - name: "flight_deck_test_db"
+      user: "flying_red_panda"
+      password: "weeee"
+      host: "mysql.database.svc.cluster.local"
+      bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
+```
+
+Where:
+
+* **endpoint** is the S3 API endpoint URL for your S3-compatible object store.
+
+Depending on your custom endpoint, you may or may not need to specify a `region` as well.
+
+## Backing up databases
+
+Tractorbeam supports backing the following databases:
+
+* MySQL/MariaDB databases which are network accessible
+* Database relationships on Platform.sh
+
+### Backing up MySQL/MariaDB
 
 Create one or more items under the `tractorbeam.databases` list:
 
 ```yaml
----
 tractorbeam:
   databases:
     - name: "flight_deck_test_db"
@@ -92,19 +185,10 @@ The each item describes a MySQL/MariaDB database to backup, where:
 * **user** is the user with which to access the database. Required.
 * **password** is the password to access the database. Optional if `passwordFile` is defined.
 * **host** is the database hostname. Optional, defaults to `localhost`.
-* **bucket** is the S3 bucket name used to store the backup. Required.
-* **prefix** is the prefix to use when saving the backup. Optional, defaults to an empty string.
-* **accessKey** is the S3 access key. Optional if `accessKeyFile` is defined.
-* **secretKey** is the S3 secret key to the bucket. Optional if `secretKeyFile` is defined.
 
-### Using separate files for credentials
-
-Sometimes, you may wish to keep certain credentials in separate files from the rest of the configuration. One such case is if you want to keep `tractorbeam.yml` in a Kubernetes configmap, but keep the database password, and bucket keys in secrets instead.
-
-For these files, you can use the `*File` version:
+If you prefer to keep the **password** in a separate file, you can use `passwordFile` instead:
 
 ```yaml
----
 tractorbeam:
   databases:
     - name: "flight_deck_test_db"
@@ -119,43 +203,20 @@ tractorbeam:
 
 Where:
 
-* **passwordFile** is the full path to a file containing the database password.
-* **accessKeyFile** is the full path to a file containing the S3 bucket access key.
-* **secretKeyFile** is the full path to a file containing the S3 bucket secret key.
+* **passwordFile** is the full path inside the container to a file containing the database password.
 
-All paths are to the file *inside* the container.
+### Backing up Platform.sh DB relationships
 
-### Specifying the region
-
-If using AWS S3, you should specify the region name in your configuration:
+This container can also back up a database relationship on your Platform.sh project to S3:
 
 ```yaml
----
 tractorbeam:
-  databases:
-    - name: "flight_deck_test_db"
-      user: "flying_red_panda"
-      password: "weeee"
-      host: "mysql.database.svc.cluster.local"
-      bucket: "my_bucket_name"
-      region: "us-east-1"
-      prefix: "my/custom/prefix"
-      accessKey: "abcef123456"
-      secretKey: "abcef123456"
-```
-
-### Using alternate endpoints
-
-You may also specify an alternate S3 endpoint to use any S3 compatible object store such as DigitalOcean Spaces, or a Ceph cluster. To do so, include the `endpoint` key:
-
-```yaml
----
-tractorbeam:
-  databases:
-    - name: "flight_deck_test_db"
-      user: "flying_red_panda"
-      password: "weeee"
-      host: "mysql.database.svc.cluster.local"
+  platformshDatabases:
+    - project: "wxyz0987"
+      environment: "master"
+      relationship: "my_db_relationship"
+      cliToken: "abcdefghijklmnop1234567890"
+      identityFile: "/config/psh-backup/id_rsa"
       bucket: "my_bucket_name"
       prefix: "my/custom/prefix"
       accessKey: "abcef123456"
@@ -163,69 +224,109 @@ tractorbeam:
       endpoint: "https://sfo2.digitaloceanspaces.com"
 ```
 
-Depending on your custom endpoint, you may or may not need to specify a `region` as well.
-
-## Backing up Platform.sh DB relationships
-
-This container can also back up a database relationship to S3:
-
-```yaml
----
-platformshDatabases:
-  - project: "wxyz0987"
-    environment: "master"
-    relationship: "my_db_relationship"
-    cliToken: "abcdefghijklmnop1234567890"
-    identityFile: "/config/psh-backup/id_rsa"
-    bucket: "my_bucket_name"
-    prefix: "my/custom/prefix"
-    accessKey: "abcef123456"
-    secretKey: "abcef123456"
-    endpoint: "https://sfo2.digitaloceanspaces.com"
-```
-
 * **project** is the project ID on Platform.sh. Required.
 * **environment** is the environment to back up. Optional, defaults to `master`.
 * **relationship** is the name of the database relationship to back up. Required.
-* **cliToken** is your [Platform.sh CLI token](https://docs.platform.sh/gettingstarted/cli/api-tokens.html). Optional if `cliTokenFile` is defined.
-* **identityFile** is the full path to the private key associated with your Platform.sh account. The public key must be in the same directory. Required.
-* **bucket** is the S3 bucket name used to store the backup. Required.
-* **prefix** is the prefix to use when saving the backup. Optional, defaults to an empty string.
-* **accessKey** is the S3 access key. Optional if `accessKeyFile` is defined.
-* **secretKey** is the S3 secret key to the bucket. Optional if `secretKeyFile` is defined.
+* **cliTokenFile** is the full path inside the container to a file containing the [Platform.sh CLI token](https://docs.platform.sh/gettingstarted/cli/api-tokens.html). Optional.
+* **cliToken** is your Platform.sh CLI token. Optional if `cliTokenFile` is defined.
+* **identityFile** is the full path inside the container to an SSH private key associated with your Platform.sh account. The public key must be in the same directory. Required.
 
-Note that `identifyFile` must **always** be a file path inside the container.
+Note that you can associate multiple SSH keys with your Platform.sh account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
 
-### Using separate files for credentials
+## Backing up files
 
-This works the same way as it does for the `tractorbeam.database` item:
+In addition to databases, you may also need to backup entire directories of files. Unlike other backups in Tractorbeam, whole-directory backups are considered "rolling". That is, only the most recent contents of the source directory are retained, with no archiving or timestamping performed. This is useful for website managed file directories where most changes are new files being added, rather than existing files being modified.
+
+Tractorbeam supports the following rolling directory backups:
+* SSH-accessible (SFTP/rsync-over-ssh) sources
+* S3 to S3
+
+### Caching files for backup
+
+Backing up files can take a considerable amount of bandwidth to synchronize, especially if the files you're backing up only have additions or rare changes. In those cases, you may use the `cacheDir` key to store any downloaded files within the container:
 
 ```yaml
----
-platformshDatabases:
-  - project: "wxyz0987"
-    environment: "master"
-    relationship: "my_db_relationship"
-    cliTokenFile: "/config/psh-backup/platform-cli-token.txt"
-    identityFile: "/config/psh-backup/id_rsa"
-    bucket: "my_bucket_name"
-    prefix: "my/custom/prefix"
-    accessKeyFile: "/secrets/my_bucket_name_accessKey.txt"
-    secretKeyFile: "/secrets/my_bucket_name_secretKey.txt"
-    endpoint: "https://sfo2.digitaloceanspaces.com"
+tractorbeam:
+  exampleBackupType:
+    - cacheDir: "/backups/files/my_bucket_name/my/custom/prefix"
+      bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
 ```
 
 Where:
 
-* **cliTokenFile** is the full path to a file containing the Platform.sh CLI token.
-* **accessKeyFile** is the full path to a file containing the S3 bucket access key.
-* **secretKeyFile** is the full path to a file containing the S3 bucket secret key.
+* **cacheDir** is the full path to the directory inside the container to cache the backups. The directory must exist, and should be mounted as a persistent volume.
 
-All paths are to the file *inside* the container.
+### Backing up files over SSH
 
-## Deployment on Kubernetes
+Tractorbeam can backup an entire directory from any SSH-accessible source. To do so, create one or more items under the `tractorbeam.files` list:
 
-Use the [`ten7.flightdeck_cluster`](https://galaxy.ansible.com/ten7/flightdeck_cluster) role on Ansible Galaxy to deploy Tractorbeam as a series of cronjobs:
+```yaml
+tractorbeam:
+  files:
+    - src: "example.com"
+      user: "myexampleuser"
+      path: "/path/to/my/files"
+      delete: true
+      identityFile: "/config/my-backup/id_rsa"
+      bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
+```
+
+Each item in the list is a SSH/SFTP/rsync-to-S3 backup to perform, where:
+
+* **src** is the source domain name or IP address. Do **not** include a protocol. Required.
+* **user** is the username with which to access the files. Required.
+* **path** is the path on the remote server from which to backup files. Required.
+* **delete** specifies if files not present in the source directory should be deleted in S3. Optional, defaults to true.
+* **identityFile** is the full path inside the container to the SSH private key with which to connect to the source server. The public key must be in the same directory. Required.
+
+Note, it is best to always create a dedicated SSH key for Tractorbeam, rather than share your existing SSH keys.
+
+### Backing up S3 Buckets
+
+Sometimes you may need to mirror the contents of an S3 bucket to another S3 bucket. Tractorbeam can do this too under the `tractorbeam.s3` list:
+
+```yaml
+tractorbeam:
+  s3:
+    - srcBucket: "my_bucket_name"
+      srcPrefix: "my/custom/prefix"
+      srcAccessKey: "abcef123456"
+      srcSecretKey: "abcef123456"
+      srcEndpoint: "https://sfo2.digitaloceanspaces.com"
+      bucket: "my_redundant_bucket"
+      delete: yes
+      prefix: "my/custom/prefix"
+      accessKey: "vwxyz098765"
+      secretKey: "vwxyz098765"
+```
+
+Each item in the list is a, s3-to-s3 backup to perform, where:
+
+* **srcBucket** is the source S3 bucket name to use when retrieving files to backup. Required.
+* **srcPrefix** is the prefix inside the source bucket for files to backup. Optional, defaults to the root of the bucket.
+* **srcAccessKey** is the access key for the source bucket. Optional if `srcAccessKeyFile` is defined.
+* **srcSecretKey** is the secret key for the source bucket. Optional if `srcSecretKeyFile` is defined.
+* **srcRegion** is the S3 region in which `srcBucket` resides. Optional.
+* **srcEndpoint** is the S3 API endpoint to use for the source bucket. Optional, defaults to AWS S3.
+* **delete** specifies if files not present in the source bucket should be deleted in the target bucket. Optional, defaults to true.
+
+By design, the S3-to-S3 backup is always performed *last* in Tractorbeam. This allows you to mirror previous backups easily.
+
+## Deployment
+
+Tractorbeam may be deployed in several ways, including base Docker, Docker Compose, Swarm, and Kubernetes.
+
+### Kubernetes
+
+Use the [`ten7.flightdeck_cluster`](https://galaxy.ansible.com/ten7/flightdeck_cluster) role on Ansible Galaxy to deploy Tractorbeam as a series of CronJobs:
 
 ```yaml
 flightdeck_cluster:
@@ -254,6 +355,7 @@ flightdeck_cluster:
         - name: "s3-secret.txt"
           content: "abcef123456"
   tractorbeam:
+    size: "100Gi"
     configMaps:
       - name: "tractorbeam"
         path: "/config/tractorbeam"
@@ -262,7 +364,7 @@ flightdeck_cluster:
         path: "/config/flight-deck-test-backup"
 ```
 
-## Using with Docker Compose
+### Docker Compose
 
 Create the `tractorbeam.yml` file relative to your `docker-compose.yml`. Define the `tractorbeam` service mounting the file as a volume:
 
@@ -278,6 +380,19 @@ services:
 
 Be sure to change the second item of the `command` to either `daily`, `weekly`, or `monthly` as appropriate to run either a daily, weekly, or monthly backup.
 
+To mount additional credential files, be sure to add them to the `volumes` key:
+
+```yaml
+version: '3'
+services:
+  solr:
+    image: ten7/tractorbeam
+    volumes:
+      - ./tractorbeam.yml:/config/tractorbeam/tractorbeam.yml
+      - ./db_password.txt:/secrets/db_password.txt
+    command: ["tractorbeam", "daily"]
+```
+
 ## Part of Flight Deck
 
 This container is part of the [Flight Deck library](https://github.com/ten7/flight-deck) of containers for Drupal local development and production workloads on Docker, Swarm, and Kubernetes.
@@ -289,7 +404,6 @@ Flight Deck is used and supported by [TEN7](https://ten7.com/).
 If you need to get verbose output from the entrypoint, set `flightdeck_debug` to `true` or `yes` in the config file.
 
 ```yaml
----
 flightdeck_debug: yes
 ```
 

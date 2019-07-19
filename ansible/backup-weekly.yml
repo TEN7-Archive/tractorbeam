@@ -1,6 +1,6 @@
 ---
 - hosts: backup
   vars:
-    tractorbeam_db_scope: "weekly"
+    tractorbeam_scope: "weekly"
   roles:
-    - tractorbeam_db
+    - tractorbeam
