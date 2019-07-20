@@ -16,3 +16,10 @@ tractorbeam_files_excludes:
   - "php/*"
   - "backup_migrate/*"
   - "private/backup_migrate/*"
+
+tractorbeam_archives_extensions:
+  bz2: ".bz2"
+  gz: ".tar.gz"
+  tar: ".tar"
+  xz: ".xz"
+  zip: ".zip"

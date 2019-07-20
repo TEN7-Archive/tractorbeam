@@ -1,0 +1,108 @@
+---
+- name: Create a temp directory to stage the backup
+  tempfile:
+    state: directory
+    prefix: "archives-{{ _backup.bucket }}-{{ _backup_timestamp }}"
+  register: _archives_temp_dir
+- name: Generate the archive filename
+  set_fact:
+    _archive_file_name: "{{ _backup.archivePrefix }}{{ _backup_timestamp }}{{ tractorbeam_archives_extensions[_format] }}"
+    _archive_file_regex: "{{ _backup.archivePrefix | regex_escape() }}[0-9]{14}{{ tractorbeam_archives_extensions[_format] | regex_escape() }}"
+  vars:
+    _format: "{{ _backup.archiveFormat | default('gz') }}"
+- name: Sync files from remote
+  shell: >
+    rsync
+    -az
+    --safe-links
+    -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    {% for _exclude in _backup.excludes | default(tractorbeam_files_excludes) %}
+    --exclude={{ _exclude }}{{ ' ' }}
+    {% endfor %}
+    {% if _backup.delete | default(true) %}
+    --delete
+    {% endif %}
+    --force
+    --chown=backup:backup
+    {{ _backup.user }}@{{ _backup.src }}:{{ _backup.path }}/
+    {{ _archives_temp_dir.path }}/files
+- name: Create archive
+  archive:
+    path: "{{ _archives_temp_dir.path }}/files/*"
+    dest: "{{ _archives_temp_dir.path }}/{{ _archive_file_name }}"
+    format: "{{ _backup.archiveFormat | default('gz') }}"
+    owner: "backup"
+    group: "backup"
+    mode: "u=r,g=r,o="
+- name: Push backup to S3
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    object: "{{ _backup.prefix | default('') }}/{{ tractorbeam_scope | default('') }}/{{ _archive_file_name }}"
+    src: "{{ _archives_temp_dir.path }}/{{ _archive_file_name }}"
+    mode: put
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+    region: "{{ _backup.region | default(omit) }}"
+    encrypt: no
+    permission: private
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Get list of files
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    prefix: "{{ _backup.prefix }}/{{ tractorbeam_scope | default('') }}"
+    mode: list
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+  register: _list_backup
+- name: Filter and sort the list of files
+  set_fact:
+    _list_backup_sorted: "{{ _list_backup.s3_keys | select('regex', _archive_file_regex) | list | sort }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Delete old backups
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    prefix: "{{ _backup.prefix }}/{{ tractorbeam_scope | default('') }}"
+    mode: delobj
+    object: "{{ item }}"
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+  loop: "{{ _list_backup_sorted[:-(_retain_count | int)] }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: delete stage directory
+  file:
+    path: "_archives_temp_dir.path"
+    state: absent
+- include_tasks: "healhcheck.yml"

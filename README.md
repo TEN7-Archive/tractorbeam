@@ -59,6 +59,7 @@ This container does not use environment variables for configuration. Instead, it
 tractorbeam:
   databases: {}
   platformshDatabases: {}
+  archives: {}
   files: {}
   s3: {}
 ```
@@ -67,7 +68,8 @@ Where:
 
 * **databases** is a list of locally accessible MySQL/MariaDB databases to back up to S3.
 * **platformshDatabases** is a list of [Platform.sh](https://platform.sh) database relationships to back up to S3.
-* **files** is a list SSH-accessible (SSH, SFTP, rsync-over-ssh) directories to backup to S3.
+* **archives** is a list of SSH-accessible (SSH, SFTP, rsync-over-ssh) directories from which to create a snapshot archive, and upload to S3.
+* **files** is a list SSH-accessible files to perform a rolling directory backup to S3.
 * **s3** is a list of backups to duplicate files between S3 buckets.
 
 ### Specifying the backup target
@@ -242,13 +244,61 @@ Note that you can associate multiple SSH keys with your Platform.sh account. It 
 
 ## Backing up files
 
-In addition to databases, you may also need to backup entire directories of files. Unlike other backups in Tractorbeam, whole-directory backups are considered "rolling". That is, only the most recent contents of the source directory are retained, with no archiving or timestamping performed. This is useful for website managed file directories where most changes are new files being added, rather than existing files being modified.
+Tractorbeam can download and backup a snapshot of a remote directory. Once downloaded, these files are compressed into a timestamped archive and then uploaded to S3.
+
+Downloading and creating snapshot files is a space and bandwidth intensive process. Avoid using this method for directories where the contents are larger than 300MB. Instead, see "Rolling Directory Backups" below.
+
+Tractorbeam supports the following file archive backups:
+* SSH-accessible (SFTP/rsync-over-ssh) sources
+
+### Backing up files over SSH
+
+To backup snapshots of a directory over SSH, create the `tractorbeam.archives` item:
+
+```yaml
+tractorbeam:
+  archives:
+    - src: "example.com"
+      user: "myexampleuser"
+      path: "/path/to/my/files"
+      identityFile: "/config/my-backup/id_rsa"
+      archivePrefix: "wbphotonics_code_live_"
+      archiveFormat: "gz"
+      bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
+```
+
+Each item in the list is a SSH/SFTP/rsync-to-S3 snapshot backup to perform, where:
+
+* **src** is the source domain name or IP address. Do **not** include a protocol. Required.
+* **user** is the username with which to access the files. Required.
+* **path** is the path on the remote server from which to backup files. Required.
+* **identityFile** is the full path inside the container to the SSH private key with which to connect to the source server. The public key must be in the same directory. Required.
+* **archivePrefix** is the prefix of the snapshot filename to apply before the timestamp and file extension. Required;
+* **archiveFormat** is the format to use to create the snapshot archive. Optional, defaults to `gz` for a `*.tar.gz` archive.
+
+The `archiveFormat` can be one of the following values:
+* `bz2`
+* `gz` (the default)
+* `tar` (no compression)
+* `xz`
+* `zip`
+
+Note, it is best to always create a dedicated SSH key for Tractorbeam, rather than share your existing SSH keys.
+
+
+## Rolling directory backups
+
+For large directories (>300MB), archiving a new snapshot each time is space and bandwidth intensive. In that case, you may wish to do a "rolling" backup. That is, only the most recent contents of the source directory are preserved, with no archiving or timestamping performed. This is useful for website managed file directories where most changes are new files being added, rather than existing files being modified.
 
 Tractorbeam supports the following rolling directory backups:
 * SSH-accessible (SFTP/rsync-over-ssh) sources
 * S3 to S3
 
-### Caching files for backup
+### Caching files for rolling backups
 
 Backing up files can take a considerable amount of bandwidth to synchronize, especially if the files you're backing up only have additions or rare changes. In those cases, you may use the `cacheDir` key to store any downloaded files within the container:
 
@@ -267,9 +317,9 @@ Where:
 
 * **cacheDir** is the full path to the directory inside the container to cache the backups. The directory must exist, and should be mounted as a persistent volume.
 
-### Backing up files over SSH
+### Rolling backup of files over SSH
 
-Tractorbeam can backup an entire directory from any SSH-accessible source. To do so, create one or more items under the `tractorbeam.files` list:
+Tractorbeam can perform a rolling backup an entire directory from any SSH-accessible source. To do so, create one or more items under the `tractorbeam.files` list:
 
 ```yaml
 tractorbeam:
@@ -286,7 +336,7 @@ tractorbeam:
       endpoint: "https://sfo2.digitaloceanspaces.com"
 ```
 
-Each item in the list is a SSH/SFTP/rsync-to-S3 backup to perform, where:
+Each item in the list is a SSH/SFTP/rsync-to-S3 rolling backup to perform, where:
 
 * **src** is the source domain name or IP address. Do **not** include a protocol. Required.
 * **user** is the username with which to access the files. Required.

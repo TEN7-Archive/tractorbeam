@@ -25,6 +25,14 @@
   loop_control:
     loop_var: _backup
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Work with archives
+  include_tasks: "archives.yml"
+  vars:
+    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+  loop: "{{ tractorbeam.archives | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - name: Work with file backups
   include_tasks: "files.yml"
   vars:
