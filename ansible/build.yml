@@ -35,6 +35,7 @@
           - "botocore"
           - "boto3"
           - "awscli"
+          - "s3cmd"
         extra_args: "--ignore-installed"
     - name: Download the Platform.sh cli
       get_url:

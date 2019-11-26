@@ -23,38 +23,41 @@
     {{ _backup.cacheDir | default(_files_temp_dir.path) }}
 - name: Sync directory to target S3
   shell: >
-    aws s3 sync
+    s3cmd sync
     {% for _exclude in _backup.excludes | default(tractorbeam_files_excludes) %}
-    --exclude "{{ _exclude }}"{{ '' }}
+    --exclude="{{ _exclude }}"{{ '' }}
     {% endfor %}
     {% if _backup.delete | default(true) %}
-    --delete
+    --delete-removed
     {% endif %}
     {% if (flightdeck_debug | default(false)) != true %}
     --quiet
-    --only-show-errors
+    {% elif lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
+    --debug
+    {% else %}
+    --verbose
     {% endif %}
     {% if _backup.endpoint is defined %}
-    --endpoint-url {{ _backup.endpoint }}
+    --host="{{ _backup.endpoint | regex_replace('[A-z]*://', '') }}"
+    --host-bucket="{{ _backup.bucketUrl | default(_backup.bucket + '.' + _backup.endpoint) | regex_replace('[A-z]*://', '') }}"
     {% endif %}
     {% if _backup.region is defined %}
-    --region {{ _backup.region }}
+    --region="{{ _backup.region }}"
     {% endif %}
+    {% if _backup.accessKeyFile is defined %}
+    --access_key="{{ lookup('file', _backup.accessKeyFile) }}"
+    {% elif _backup.accessKey is defined %}
+    --access_key="{{ _backup.accessKey }}"
+    {% endif %}
+    {% if _backup.secretKeyFile is defined %}
+    --secret_key="{{ lookup('file', _backup.secretKeyFile) }}"
+    {% elif _backup.secretKey is defined %}
+    --secret_key="{{ _backup.secretKey }}"
+    {% endif %}
+    --acl-private
+    --recursive
     {{ _backup.cacheDir | default(_files_temp_dir.path) }}/
-    s3://{{ _backup.bucket }}/{{ _backup.prefix }}
-  environment:
-    AWS_ACCESS_KEY_ID: "\
-      {% if _backup.accessKeyFile is defined %}\
-      {{ lookup('file', _backup.accessKeyFile) }}\
-      {% else %}\
-      {{ _backup.accessKey | default(omit) }}\
-      {% endif %}"
-    AWS_SECRET_ACCESS_KEY: "\
-      {% if _backup.secretKeyFile is defined %}\
-      {{ lookup('file', _backup.secretKeyFile) }}\
-      {% else %}\
-      {{ _backup.secretKey | default(omit) }}\
-      {% endif %}"
+    s3://{{ _backup.bucket }}/{{ _backup.prefix }}/
 - name: delete stage directory
   file:
     path: "_files_temp_dir.path"
