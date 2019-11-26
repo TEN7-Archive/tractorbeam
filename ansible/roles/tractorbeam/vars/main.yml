@@ -1,0 +1,27 @@
+---
+_tractorbeam_default_backupSets:
+  daily:
+    retainCount: 7
+  weekly:
+    retainCount: 31
+  monthly:
+    retainCount: 366
+
+_tractorbeam_default_sets_for_backup: "{{ _tractorbeam_default_backupSets.keys() | list }}"
+
+_tractorbeam_default_files_excludes:
+  - ".git"
+  - "css/*"
+  - "js/*"
+  - "imagecache/*"
+  - "styles/*"
+  - "php/*"
+  - "backup_migrate/*"
+  - "private/backup_migrate/*"
+
+_tractorbeam_archives_extensions:
+  bz2: ".bz2"
+  gz: ".tar.gz"
+  tar: ".tar"
+  xz: ".xz"
+  zip: ".zip"

@@ -6,8 +6,8 @@
   register: _archives_temp_dir
 - name: Generate the archive filename
   set_fact:
-    _archive_file_name: "{{ _backup.archivePrefix }}{{ _backup_timestamp }}{{ tractorbeam_archives_extensions[_format] }}"
-    _archive_file_regex: "{{ _backup.archivePrefix | regex_escape() }}[0-9]{14}{{ tractorbeam_archives_extensions[_format] | regex_escape() }}"
+    _archive_file_name: "{{ _backup.archivePrefix }}{{ _backup_timestamp }}{{ _tractorbeam_archives_extensions[_format] }}"
+    _archive_file_regex: "{{ _backup.archivePrefix | regex_escape() }}[0-9]{14}{{ _tractorbeam_archives_extensions[_format] | regex_escape() }}"
   vars:
     _format: "{{ _backup.archiveFormat | default('gz') }}"
 - name: Sync files from remote
@@ -16,7 +16,7 @@
     -az
     --safe-links
     -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-    {% for _exclude in _backup.excludes | default(tractorbeam_files_excludes) %}
+    {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
     --exclude={{ _exclude }}{{ ' ' }}
     {% endfor %}
     {% if _backup.delete | default(true) %}

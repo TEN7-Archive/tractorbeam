@@ -1,4 +1,21 @@
 ---
+- name: Get a list of backupSets.
+  set_fact:
+    _backupSets: "{{ _tractorbeam_default_backupSets | combine(tractorbeam.backupSets | default({}), recursive=True) }}"
+- name: Stop if the backupSet doesn't exist.
+  fail:
+    msg: >
+      The given backupSet name '{{ tractorbeam_scope | default() }}' is not in tractorbeam.yml.
+
+      Known backupSets are: "{{ _backupSets.keys() | list | join(', ') }}"
+  when:
+    - _backupSets[tractorbeam_scope] is not defined
+- name: Get the backupSet.
+  set_fact:
+    _backupSet: "{{ _backupSets[tractorbeam_scope] }}"
+#
+# Get ready for backups.
+#
 - name: Generate the backup timestamp.
   set_fact:
     _backup_timestamp: "{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
@@ -9,46 +26,64 @@
   register: _run_temp_dir
   notify:
     - delete temp items
+#
+# Backups start here.
+#
 - name: Work with databases
   include_tasks: "databases.yml"
   vars:
-    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+    _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.databases | default([]) }}"
   loop_control:
     loop_var: _backup
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with platform.sh databases
   include_tasks: "platformshDatabases.yml"
   vars:
-    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+    _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.platformshDatabases | default([]) }}"
   loop_control:
     loop_var: _backup
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with archives
   include_tasks: "archives.yml"
   vars:
-    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+    _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.archives | default([]) }}"
   loop_control:
     loop_var: _backup
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with file backups
   include_tasks: "files.yml"
   vars:
-    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+    _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.files | default([]) }}"
   loop_control:
     loop_var: _backup
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 #
 # S3 to S3 backups always run last!
 #
 - name: Work with s3 backups
   include_tasks: "s3.yml"
   vars:
-    _retain_count: "{{ tractorbeam_expiries[tractorbeam_scope] }}"
+    _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.s3 | default([]) }}"
   loop_control:
     loop_var: _backup
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
