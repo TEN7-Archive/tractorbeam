@@ -11,7 +11,7 @@
     rsync
     -az
     -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-    {% for _exclude in _backup.excludes | default(tractorbeam_files_excludes) %}
+    {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
     --exclude={{ _exclude }}{{ ' ' }}
     {% endfor %}
     {% if _backup.delete | default(true) %}
@@ -24,7 +24,7 @@
 - name: Sync directory to target S3
   shell: >
     s3cmd sync
-    {% for _exclude in _backup.excludes | default(tractorbeam_files_excludes) %}
+    {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
     --exclude="{{ _exclude }}"{{ '' }}
     {% endfor %}
     {% if _backup.delete | default(true) %}

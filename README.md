@@ -164,6 +164,26 @@ tractorbeam:
       healthcheckUrl: "https://hc-ping.com/abcdefghijklmnop1234567890"
 ```
 
+### Disabling a backup
+
+If you need to disable a particular backup, you can use the `disabled` key:
+
+```yaml
+tractorbeam:
+  exampleBackupType:
+    - bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
+      healthcheckUrl: "https://hc-ping.com/abcdefghijklmnop1234567890"
+      disabled: yes
+```
+
+Where:
+
+* **disabled** is if the backup is disabled or not. Uses a YAML boolean.
+
 ## Backing up databases
 
 Tractorbeam supports backing the following databases:
