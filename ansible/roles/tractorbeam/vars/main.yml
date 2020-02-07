@@ -19,6 +19,8 @@ _tractorbeam_default_files_excludes:
   - "backup_migrate/*"
   - "private/backup_migrate/*"
 
+_tractorbeam_default_platformshFiles_excludes: "{{ _tractorbeam_default_files_excludes }}"
+
 _tractorbeam_archives_extensions:
   bz2: ".bz2"
   gz: ".tar.gz"
