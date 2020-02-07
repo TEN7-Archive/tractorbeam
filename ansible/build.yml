@@ -77,6 +77,15 @@
         owner: "backup"
         group: "backup"
         mode: "u=rwx,g=rwx,o="
+    - name: Update permissions of key directories
+      file:
+         path: "{{ item }}"
+         state: directory
+         owner: "backup"
+         group: "backup"
+         mode: "u=rwx,g=rwx,o="
+      loop:
+        - "/home/backup/.ssh"
   handlers:
     - name: clear apk cache
       file:

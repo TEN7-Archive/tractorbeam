@@ -1,0 +1,94 @@
+---
+- name: Create a temp directory to stage the backup
+  tempfile:
+    state: directory
+    prefix: "platformshFiles-{{ _backup.bucket }}-{{ _backup_timestamp }}"
+  register: _platformshFiles_temp_dir
+  when:
+    - _backup.cacheDir is not defined
+
+- name: Copy identity files to ~/.ssh
+  copy:
+    src: "{{ item }}"
+    dest: "/home/backup/.ssh/{{ item | basename }}"
+    owner: "backup"
+    group: "backup"
+    mode: "u=rw,g=,o="
+    force: yes
+  loop:
+    - "{{ _backup.identityFile }}"
+    - "{{ _backup.identityFile }}.pub"
+
+- name: Backup mounts
+  shell: >
+    platform mount:download
+    -y
+    {% for _exclude in _backup.excludes | default(_tractorbeam_default_platformshFiles_excludes) %}
+    --exclude={{ _exclude }}{{ ' ' }}
+    {% endfor %}
+    {% if _backup.delete | default(true) %}
+    --delete
+    {% endif %}
+    --project={{ _backup.project }}
+    --environment={{ _backup.environment | default('master') }}
+    --mount="{{ _backup.mount }}"
+    --target="{{ _backup.cacheDir | default(_platformshFiles_temp_dir.path) }}/"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  environment:
+    PLATFORMSH_CLI_TOKEN: "\
+      {% if _backup.cliTokenFile is defined %}\
+      {{ lookup('file', _backup.cliTokenFile) }}\
+      {% else %}\
+      {{ _backup.cliToken }}\
+      {% endif %}"
+- name: Sync directory to target S3
+  shell: >
+    s3cmd sync
+    {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
+    --exclude="{{ _exclude }}"{{ '' }}
+    {% endfor %}
+    {% if _backup.delete | default(true) %}
+    --delete-removed
+    {% endif %}
+    {% if (flightdeck_debug | default(false)) != true %}
+    --quiet
+    {% elif lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
+    --debug
+    {% else %}
+    --verbose
+    {% endif %}
+    {% if _backup.endpoint is defined %}
+    --host="{{ _backup.endpoint | regex_replace('[A-z]*://', '') }}"
+    --host-bucket="{{ _backup.bucketUrl | default(_backup.bucket + '.' + _backup.endpoint) | regex_replace('[A-z]*://', '') }}"
+    {% endif %}
+    {% if _backup.region is defined %}
+    --region="{{ _backup.region }}"
+    {% endif %}
+    {% if _backup.accessKeyFile is defined %}
+    --access_key="{{ lookup('file', _backup.accessKeyFile) }}"
+    {% elif _backup.accessKey is defined %}
+    --access_key="{{ _backup.accessKey }}"
+    {% endif %}
+    {% if _backup.secretKeyFile is defined %}
+    --secret_key="{{ lookup('file', _backup.secretKeyFile) }}"
+    {% elif _backup.secretKey is defined %}
+    --secret_key="{{ _backup.secretKey }}"
+    {% endif %}
+    --acl-private
+    --recursive
+    {{ _backup.cacheDir | default(_platformshFiles_temp_dir.path) }}/
+    s3://{{ _backup.bucket }}/{{ _backup.prefix }}/
+- name: Removed identity files in ~/.ssh
+  file:
+    path: "/home/backup/.ssh/{{ item | basename }}"
+    state: absent
+  loop:
+    - "{{ _backup.identityFile }}"
+    - "{{ _backup.identityFile }}.pub"
+- name: delete stage directory
+  file:
+    path: "_platformshFiles_temp_dir.path"
+    state: absent
+  when:
+    - _platformshFiles_temp_dir.path is defined
+- include_tasks: "healhcheck.yml"

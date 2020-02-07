@@ -59,6 +59,7 @@ This container does not use environment variables for configuration. Instead, it
 tractorbeam:
   databases: {}
   platformshDatabases: {}
+  platformshFiles: {}
   archives: {}
   files: {}
   s3: {}
@@ -68,6 +69,7 @@ Where:
 
 * **databases** is a list of locally accessible MySQL/MariaDB databases to back up to S3.
 * **platformshDatabases** is a list of [Platform.sh](https://platform.sh) database relationships to back up to S3.
+* **platformshFiles** is a list of [Platform.sh](https://platform.sh) file mounts to back up to S3.
 * **archives** is a list of SSH-accessible (SSH, SFTP, rsync-over-ssh) directories from which to create a snapshot archive, and upload to S3.
 * **files** is a list SSH-accessible files to perform a rolling directory backup to S3.
 * **s3** is a list of backups to duplicate files between S3 buckets.
@@ -365,6 +367,34 @@ Each item in the list is a SSH/SFTP/rsync-to-S3 rolling backup to perform, where
 * **identityFile** is the full path inside the container to the SSH private key with which to connect to the source server. The public key must be in the same directory. Required.
 
 Note, it is best to always create a dedicated SSH key for Tractorbeam, rather than share your existing SSH keys.
+
+### Backing up Platform.sh file mounts
+
+This container can also back up a file mount on your Platform.sh project to S3:
+
+```yaml
+tractorbeam:
+  platformshFiles:
+    - project: "wxyz0987"
+      environment: "master"
+      mount: "web/sites/default/files"
+      cliToken: "abcdefghijklmnop1234567890"
+      identityFile: "/config/psh-backup/id_rsa"
+      bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
+```
+
+* **project** is the project ID on Platform.sh. Required.
+* **environment** is the environment to back up. Optional, defaults to `master`.
+* **mount** is the name of the file mount from `platform mounts` to back up. Required.
+* **cliTokenFile** is the full path inside the container to a file containing the [Platform.sh CLI token](https://docs.platform.sh/gettingstarted/cli/api-tokens.html). Optional.
+* **cliToken** is your Platform.sh CLI token. Optional if `cliTokenFile` is defined.
+* **identityFile** is the full path inside the container to an SSH private key associated with your Platform.sh account. The public key must be in the same directory. Required.
+
+Note that you can associate multiple SSH keys with your Platform.sh account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
 
 ### Backing up S3 Buckets
 
