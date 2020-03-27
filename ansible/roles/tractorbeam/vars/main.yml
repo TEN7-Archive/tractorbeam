@@ -3,9 +3,9 @@ _tractorbeam_default_backupSets:
   daily:
     retainCount: 7
   weekly:
-    retainCount: 31
+    retainCount: 4
   monthly:
-    retainCount: 366
+    retainCount: 12
 
 _tractorbeam_default_sets_for_backup: "{{ _tractorbeam_default_backupSets.keys() | list }}"
 
