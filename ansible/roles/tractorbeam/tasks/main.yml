@@ -30,7 +30,7 @@
 # Backups start here.
 #
 - name: Work with databases
-  include_tasks: "1-databases.yml"
+  include_tasks: "databases.yml"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.databases | default([]) }}"
@@ -41,7 +41,7 @@
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with platform.sh databases
-  include_tasks: "2-platformshDatabases.yml"
+  include_tasks: "platformshDatabases.yml"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.platformshDatabases | default([]) }}"
@@ -52,7 +52,7 @@
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with archives
-  include_tasks: "3-archives.yml"
+  include_tasks: "archives.yml"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.archives | default([]) }}"
@@ -63,7 +63,7 @@
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with file backups
-  include_tasks: "4-files.yml"
+  include_tasks: "files.yml"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.files | default([]) }}"
@@ -74,7 +74,7 @@
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with platform.sh files
-  include_tasks: "5-platformshFiles.yml"
+  include_tasks: "platformshFiles.yml"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.platformshFiles | default([]) }}"
@@ -85,53 +85,13 @@
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 #
-# S3 to S3 backups are always taken last!
+# S3 to S3 backups always run last!
 #
 - name: Work with s3 backups
-  include_tasks: "6-s3.yml"
+  include_tasks: "s3.yml"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
   loop: "{{ tractorbeam.s3 | default([]) }}"
-  loop_control:
-    loop_var: _backup
-  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
-  when:
-    - _backup.disabled | default(false) == false
-    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
-#
-# Rotate backups that are subject to a retention period.
-#
-# Some S3 providers cannot handle an s3cmd sync immediately after files are
-# deleted. The file disapppears mid-sync and causes issues. So we rotate after
-# bucket syncs. This will ripple down to s3 to s3 backups later.
-#
-- name: Rotate database backups
-  include_tasks: "7-rotate-databases.yml"
-  vars:
-    _retain_count: "{{ _backupSet.retainCount }}"
-  loop: "{{ tractorbeam.databases | default([]) }}"
-  loop_control:
-    loop_var: _backup
-  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
-  when:
-    - _backup.disabled | default(false) == false
-    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
-- name: Rotate platform.sh database backups
-  include_tasks: "8-rotate-platformshDatabases.yml"
-  vars:
-    _retain_count: "{{ _backupSet.retainCount }}"
-  loop: "{{ tractorbeam.platformshDatabases | default([]) }}"
-  loop_control:
-    loop_var: _backup
-  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
-  when:
-    - _backup.disabled | default(false) == false
-    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
-- name: Rotate archive backups
-  include_tasks: "9-rotate-archives.yml"
-  vars:
-    _retain_count: "{{ _backupSet.retainCount }}"
-  loop: "{{ tractorbeam.archives | default([]) }}"
   loop_control:
     loop_var: _backup
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"

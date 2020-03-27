@@ -1,4 +1,42 @@
 ---
+- name: Backup database
+  mysql_db:
+    state: dump
+    name: "{{ _backup.name }}"
+    target: "{{ _run_temp_dir.path }}/{{ _backup.name }}_{{ _backup_timestamp }}.sql.gz"
+    login_host: "{{ _backup.host | default('localhost') }}"
+    login_port: "{{ _backup.port | default('3306') | int }}"
+    login_user: "{{ _backup.user | default(omit) }}"
+    login_password: "\
+      {% if _backup.passwordFile is defined %}\
+      {{ lookup('file', _backup.passwordFile) }}\
+      {% else %}\
+      {{ _backup.password | default(omit) }}\
+      {% endif %}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Push backup to S3
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    object: "{{ _backup.prefix | default('') }}/{{ tractorbeam_scope | default('') }}/{{ _backup.name }}_{{ _backup_timestamp }}.sql.gz"
+    src: "{{ _run_temp_dir.path }}/{{ _backup.name }}_{{ _backup_timestamp }}.sql.gz"
+    mode: put
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+    region: "{{ _backup.region | default(omit) }}"
+    encrypt: no
+    permission: private
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - name: Get list of files
   aws_s3:
     bucket: "{{ _backup.bucket }}"
