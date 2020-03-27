@@ -18,10 +18,6 @@ COPY ansible /ansible
 RUN ansible-galaxy install -fr /ansible/requirements.yml && \
     ansible-playbook -i /ansible/inventories/all.ini /ansible/build.yml
 
-# Configure the runtime environment of the container.
-VOLUME /var/lib/mysql
-EXPOSE 3306
-
 # Switch to the service account.
 USER backup
 

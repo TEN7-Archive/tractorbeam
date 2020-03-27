@@ -37,6 +37,12 @@
           - "awscli"
           - "s3cmd"
         extra_args: "--ignore-installed"
+    - name: Change the ownership of s3cmd due to permission wonkiness
+      file:
+        path: "/usr/bin/s3cmd"
+        owner: "backup"
+        group: "backup"
+        mode: "u=rx,g=rx,o="
     - name: Download the Platform.sh cli
       get_url:
         url: "{{ platformsh_cli_url }}"
