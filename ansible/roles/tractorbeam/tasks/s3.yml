@@ -40,8 +40,14 @@
     --secret_key="{{ _backup.srcSecretKey }}"
     {% endif %}
     --recursive
+    --continue
+    --force
     s3://{{ _backup.srcBucket }}/{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
     {{ _backup.cacheDir | default(_s3_temp_dir.path) }}/
+  register: _froms3_result
+  until: _froms3_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
 - name: Sync directory to S3
   shell: >
     s3cmd sync
@@ -77,8 +83,14 @@
     {% endif %}
     --acl-private
     --recursive
+    --continue
+    --force
     {{ _backup.cacheDir | default(_s3_temp_dir.path) }}/
     s3://{{ _backup.bucket }}/{{ _backup.prefix }}/
+  register: _tos3_result
+  until: _tos3_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
 - name: delete stage directory
   file:
     path: "_s3_temp_dir.path"
