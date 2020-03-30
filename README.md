@@ -409,6 +409,7 @@ tractorbeam:
       srcSecretKey: "abcef123456"
       srcEndpoint: "https://sfo2.digitaloceanspaces.com"
       bucket: "my_redundant_bucket"
+      method: "s3cmd"
       delete: yes
       prefix: "my/custom/prefix"
       accessKey: "vwxyz098765"
@@ -424,8 +425,11 @@ Each item in the list is a, s3-to-s3 backup to perform, where:
 * **srcRegion** is the S3 region in which `srcBucket` resides. Optional.
 * **srcEndpoint** is the S3 API endpoint to use for the source bucket. Optional, defaults to AWS S3.
 * **delete** specifies if files not present in the source bucket should be deleted in the target bucket. Optional, defaults to true.
+* **method** specifies the command to use to perform the sync. Must be `awcli` or `s3cmd`. Optional, default is `s3cmd`.
 
 By design, the S3-to-S3 backup is always performed *last* in Tractorbeam. This allows you to mirror previous backups easily.
+
+Note that Tractorbeam uses [s3cmd](https://s3tools.org/s3cmd) instead of the AWS CLI to perform the sync by default. s3cmd works slightly faster, and handles deep directories better. If you experience problems, you may fall back to the AWS CLI 
 
 ## Deployment
 
