@@ -40,6 +40,10 @@
       {% else %}\
       {{ _backup.srcSecretKey | default(omit) }}\
       {% endif %}"
+  register: _froms3_result
+  until: _froms3_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
   when:
     - _backup.method | default('s3cmd') == 'awscli'
 - name: Sync directory to S3 using awscli
@@ -76,6 +80,10 @@
       {% else %}\
       {{ _backup.secretKey | default(omit) }}\
       {% endif %}"
+  register: _tos3_result
+  until: _tos3_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
   when:
     - _backup.method | default('s3cmd') == 'awscli'
 - name: Sync files from source S3 using s3cmd
