@@ -17,6 +17,7 @@
     {% endif %}
     {% if (flightdeck_debug | default(false)) != true %}
     --quiet
+    {% elif lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
     --only-show-errors
     {% endif %}
     {% if _backup.srcEndpoint is defined %}
@@ -57,6 +58,7 @@
     {% endif %}
     {% if (flightdeck_debug | default(false)) != true %}
     --quiet
+    {% elif lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
     --only-show-errors
     {% endif %}
     {% if _backup.endpoint is defined %}
@@ -122,6 +124,7 @@
     --recursive
     --continue
     --force
+    --no-preserve
     s3://{{ _backup.srcBucket }}/{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
     {{ _backup.cacheDir | default(_s3_temp_dir.path) }}/
   register: _froms3_result
@@ -167,6 +170,7 @@
     --recursive
     --continue
     --force
+    --no-preserve
     {{ _backup.cacheDir | default(_s3_temp_dir.path) }}/
     s3://{{ _backup.bucket }}/{{ _backup.prefix }}/
   register: _tos3_result
