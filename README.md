@@ -188,10 +188,7 @@ Where:
 
 ## Backing up databases
 
-Tractorbeam supports backing the following databases:
-
-* MySQL/MariaDB databases which are network accessible
-* Database relationships on Platform.sh
+Tractorbeam supports backing the databases from database servers as well as popular hosting paltforms.
 
 ### Backing up MySQL/MariaDB
 
@@ -236,6 +233,35 @@ Where:
 
 * **passwordFile** is the full path inside the container to a file containing the database password.
 
+### Backing up from Pantheon.io
+
+Tractorbeam can create backups and upload them off-site to an S3 bucket:
+
+```yaml
+tractorbeam:
+  pantheon:
+    - site: "wxyz0987"
+      environment: "live"
+      element: "database"
+      machineToken: "abcdefghijklmnop1234567890"
+      cacheDir: "/config/panth-backup/id_rsa"
+      bucket: "my_bucket_name"
+      prefix: "my/custom/prefix"
+      accessKey: "abcef123456"
+      secretKey: "abcef123456"
+      endpoint: "https://sfo2.digitaloceanspaces.com"
+```
+
+* **site** is the site ID on Pantheon.io. Required.
+* **environment** is the environment to back up. Optional, defaults to `master`.
+* **element** is type of backup to perform. This can be `database` or `files`. Optional, defaults to `database`.
+* **machineTokenFile** is the full path inside the container to a file containing the [Pantheon.io machine token](https://pantheon.io/docs/machine-tokens). Required.
+* **machineToken** is your Pantheon.io machine token. Optional if `machineTokenFile` is defined.
+
+Note that unlike many other backup types, Pantheon backups can be either the database or files. Files are backed up as a dated archive and not a rolling directory of files.
+
+Note that you can associate multiple SSH keys with your Pantheon.io account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
+
 ### Backing up Platform.sh DB relationships
 
 This container can also back up a database relationship on your Platform.sh project to S3:
@@ -269,9 +295,6 @@ Note that you can associate multiple SSH keys with your Platform.sh account. It 
 Tractorbeam can download and backup a snapshot of a remote directory. Once downloaded, these files are compressed into a timestamped archive and then uploaded to S3.
 
 Downloading and creating snapshot files is a space and bandwidth intensive process. Avoid using this method for directories where the contents are larger than 300MB. Instead, see "Rolling Directory Backups" below.
-
-Tractorbeam supports the following file archive backups:
-* SSH-accessible (SFTP/rsync-over-ssh) sources
 
 ### Backing up files over SSH
 
@@ -316,10 +339,6 @@ Note, it is best to always create a dedicated SSH key for Tractorbeam, rather th
 
 For large directories (>300MB), archiving a new snapshot each time is space and bandwidth intensive. In that case, you may wish to do a "rolling" backup. That is, only the most recent contents of the source directory are preserved, with no archiving or timestamping performed. This is useful for website managed file directories where most changes are new files being added, rather than existing files being modified.
 
-Tractorbeam supports the following rolling directory backups:
-* SSH-accessible (SFTP/rsync-over-ssh) sources
-* S3 to S3
-
 ### Caching files for rolling backups
 
 Backing up files can take a considerable amount of bandwidth to synchronize, especially if the files you're backing up only have additions or rare changes. In those cases, you may use the `cacheDir` key to store any downloaded files within the container:
@@ -351,6 +370,9 @@ tractorbeam:
       path: "/path/to/my/files"
       delete: true
       identityFile: "/config/my-backup/id_rsa"
+      port: "22"
+      options:
+        - "-az"
       bucket: "my_bucket_name"
       prefix: "my/custom/prefix"
       accessKey: "abcef123456"
@@ -365,8 +387,14 @@ Each item in the list is a SSH/SFTP/rsync-to-S3 rolling backup to perform, where
 * **path** is the path on the remote server from which to backup files. Required.
 * **delete** specifies if files not present in the source directory should be deleted in S3. Optional, defaults to true.
 * **identityFile** is the full path inside the container to the SSH private key with which to connect to the source server. The public key must be in the same directory. Required.
+* **port** is the SSH port number if an alternative port is used. Optional.
+* **options** is a list of options to pass to the `rsync` command. Optional, defaults to a list of a single option, `-az`.
 
 Note, it is best to always create a dedicated SSH key for Tractorbeam, rather than share your existing SSH keys.
+
+### Backing up Pantheon files
+
+See the Backing up from Pantheon.io section above.
 
 ### Backing up Platform.sh file mounts
 
@@ -429,7 +457,7 @@ Each item in the list is a, s3-to-s3 backup to perform, where:
 
 By design, the S3-to-S3 backup is always performed *last* in Tractorbeam. This allows you to mirror previous backups easily.
 
-Note that Tractorbeam uses [s3cmd](https://s3tools.org/s3cmd) instead of the AWS CLI to perform the sync by default. s3cmd works slightly faster, and handles deep directories better. If you experience problems, you may fall back to the AWS CLI 
+Note that Tractorbeam uses [s3cmd](https://s3tools.org/s3cmd) instead of the AWS CLI to perform the sync by default. s3cmd works slightly faster, and handles deep directories better. If you experience problems, you may fall back to the AWS CLI
 
 ## Deployment
 

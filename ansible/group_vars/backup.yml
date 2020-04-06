@@ -1,5 +1,5 @@
 ---
-flighdeck_motd_name: "Tractorbeam 2.2.3"
+flighdeck_motd_name: "Tractorbeam 2.3.0"
 
 flightdeck_groups:
   - name: "backup"
