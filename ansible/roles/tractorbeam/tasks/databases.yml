@@ -7,6 +7,8 @@
     login_host: "{{ _backup.host | default('localhost') }}"
     login_port: "{{ _backup.port | default('3306') | int }}"
     login_user: "{{ _backup.user | default(omit) }}"
+    client_cert: "{{ _backup.tlscert | default(omit) }}"
+    client_key: "{{ _backup.tlskey | default(omit) }}"
     login_password: "\
       {% if _backup.passwordFile is defined %}\
       {{ lookup('file', _backup.passwordFile) }}\

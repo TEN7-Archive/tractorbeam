@@ -9,8 +9,10 @@
 - name: Sync files from remote
   shell: >
     rsync
-    -az
-    -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    {% for _option in _backup.options | default(['-az']) %}
+    {{ _option }}{{ ' ' }}
+    {% endfor %}
+    -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {% if _backup.port is defined %}-p {{ _backup.port }}{% endif %}"
     {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
     --exclude={{ _exclude }}{{ ' ' }}
     {% endfor %}
