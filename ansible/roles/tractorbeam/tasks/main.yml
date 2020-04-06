@@ -40,6 +40,17 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+- name: Work with pantheon backups
+  include_tasks: "pantheon.yml"
+  vars:
+    _retain_count: "{{ _backupSet.retainCount }}"
+  loop: "{{ tractorbeam.pantheon | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 - name: Work with platform.sh databases
   include_tasks: "platformshDatabases.yml"
   vars:

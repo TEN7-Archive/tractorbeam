@@ -6,7 +6,15 @@
   register: _platformshFiles_temp_dir
   when:
     - _backup.cacheDir is not defined
-
+- name: Create a cache directory for the backup
+  file:
+    state: directory
+    path: "{{ _backup.cacheDir }}"
+    owner: "backup"
+    group: "backup"
+    mode: "u=rwx,g=rxw,o=rwx"
+  when:
+    - _backup.cacheDir is defined
 - name: Copy identity files to ~/.ssh
   copy:
     src: "{{ item }}"

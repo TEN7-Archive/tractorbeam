@@ -1,0 +1,155 @@
+---
+- name: Create a temp directory to stage the backup
+  tempfile:
+    state: directory
+    prefix: "files-{{ _backup.bucket }}-{{ _backup_timestamp }}"
+  register: _pantheon_temp_dir
+  when:
+    - _backup.cacheDir is not defined
+- name: Create a cache directory for the backup
+  file:
+    state: directory
+    path: "{{ _backup.cacheDir }}"
+    owner: "backup"
+    group: "backup"
+    mode: "u=rwx,g=rxw,o=rwx"
+  when:
+    - _backup.cacheDir is defined
+- name: Authenticate with Pantheon
+  shell: >
+    terminus auth:login
+    --machine-token={{ _auth }}
+    {% if (flightdeck_debug | default(false)) != true %}
+    --quiet
+    {% elif lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
+    -vvv
+    {% endif %}
+    --no-interaction
+    --yes
+  vars:
+    _auth: "\
+      {% if _backup.machineTokenFile is defined %}\
+      {{ lookup('file', _backup.machineTokenFile) }}\
+      {% else %}\
+      {{ _backup.machineToken }}\
+      {% endif %}"
+- name: Create backup
+  shell: >
+    terminus backup:create
+    {{ _backup.site }}.{{ _backup.environment }}
+    --element={{ _backup.element | default('database') }}
+    {% if (flightdeck_debug | default(false)) != true %}
+    --quiet
+    {% elif lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
+    -vvv
+    {% endif %}
+    --no-interaction
+    --yes
+- name: Get list of backups
+  shell: >
+    terminus backup:list
+    {{ _backup.site }}.{{ _backup.environment }}
+    --element={{ _backup.element | default('database') }}
+    --field=file
+    {% if lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
+    -vvv
+    {% endif %}
+    --no-interaction
+    --yes
+  register: _pantheon_backup_list
+- name: Get the most recent backup
+  set_fact:
+    _pantheon_backup_filename: "{{ _pantheon_backup_list.stdout_lines | default([]) | first }}"
+- name: Download backup
+  shell: >
+    terminus backup:get
+    {{ _backup.site }}.{{ _backup.environment }}
+    --file={{ _pantheon_backup_filename }}
+    --to={{ _backup.cacheDir | default(_pantheon_temp_dir.path) }}/{{ _pantheon_backup_filename }}
+    {% if lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
+    -vvv
+    {% endif %}
+    --no-interaction
+    --yes
+  args:
+    creates: "{{ _backup.cacheDir | default(_pantheon_temp_dir.path) }}/{{ _pantheon_backup_filename }}"
+- name: Push backup to S3
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    object: "{{ _backup.prefix | default('') }}/{{ tractorbeam_scope | default('') }}/{{ _pantheon_backup_filename }}"
+    src: "{{ _backup.cacheDir | default(_pantheon_temp_dir.path) }}/{{ _pantheon_backup_filename }}"
+    mode: put
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+    region: "{{ _backup.region | default(omit) }}"
+    encrypt: no
+    permission: private
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Get list of files
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    prefix: "{{ _backup.prefix }}/{{ tractorbeam_scope | default('') }}"
+    mode: list
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+  register: _list_backup
+- name: Filter and sort the list of files
+  set_fact:
+    _list_backup_sorted: "{{ _list_backup.s3_keys | select('regex', _regex) | list | sort }}"
+  vars:
+    _regex: "\
+      {% if _backup.element | default('database') == 'database' %}\
+      \\.sql\\.gz\
+      {% else %}\
+      \\.tar\\.gz\
+      {% endif %}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Delete old backups
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    prefix: "{{ _backup.prefix }}/{{ tractorbeam_scope | default('') }}"
+    mode: delobj
+    object: "{{ item }}"
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+  loop: "{{ _list_backup_sorted[:-(_retain_count | int)] }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Logout of Pantheon
+  shell: >
+    terminus auth:logout
+    --no-interaction
+    --yes
+- include_tasks: "healhcheck.yml"

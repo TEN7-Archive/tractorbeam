@@ -6,11 +6,22 @@
   register: _files_temp_dir
   when:
     - _backup.cacheDir is not defined
+- name: Create a cache directory for the backup
+  file:
+    state: directory
+    path: "{{ _backup.cacheDir }}"
+    owner: "backup"
+    group: "backup"
+    mode: "u=rwx,g=rxw,o=rwx"
+  when:
+    - _backup.cacheDir is defined
 - name: Sync files from remote
   shell: >
     rsync
-    -az
-    -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    {% for _option in _backup.options | default(['-az']) %}
+    {{ _option }}{{ ' ' }}
+    {% endfor %}
+    -e "ssh -i {{ _backup.identityFile }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {% if _backup.port is defined %}-p {{ _backup.port }}{% endif %}"
     {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
     --exclude={{ _exclude }}{{ ' ' }}
     {% endfor %}
