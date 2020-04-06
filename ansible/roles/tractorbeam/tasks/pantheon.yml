@@ -28,7 +28,7 @@
     --yes
   vars:
     _auth: "\
-      {% if _backup.cliTokenFile is defined %}\
+      {% if _backup.machineTokenFile is defined %}\
       {{ lookup('file', _backup.machineTokenFile) }}\
       {% else %}\
       {{ _backup.machineToken }}\
