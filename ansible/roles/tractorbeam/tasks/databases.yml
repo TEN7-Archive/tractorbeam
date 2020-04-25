@@ -57,6 +57,7 @@
       {{ _backup.secretKey | default(omit) }}\
       {% endif %}"
     s3_url: "{{ _backup.endpoint | default(omit) }}"
+    region: "{{ _backup.region | default(omit) }}"
   register: _list_backup
 - name: Filter and sort the list of files
   set_fact:
@@ -83,6 +84,7 @@
       {{ _backup.secretKey | default(omit) }}\
       {% endif %}"
     s3_url: "{{ _backup.endpoint | default(omit) }}"
+    region: "{{ _backup.region | default(omit) }}"
   loop: "{{ _list_backup_sorted[:-(_retain_count | int)] }}"
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - include_tasks: "healhcheck.yml"
