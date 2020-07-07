@@ -99,9 +99,17 @@
 # S3 to S3 backups always run last!
 #
 - name: Work with s3 backups
-  include_tasks: "s3.yml"
+  include_tasks: "{{ _task_file }}"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
+    _task_file: "\
+      {% if _backup.method | default('s3cmd') == 'awscli' %}\
+      s3/awscli.yml\
+      {% elif _backup.method | default('s3cmd') == 'gsutil' %}\
+      s3/gsutil.yml\
+      {% else %}\
+      s3/s3cmd.yml\
+      {% endif %}"
   loop: "{{ tractorbeam.s3 | default([]) }}"
   loop_control:
     loop_var: _backup
