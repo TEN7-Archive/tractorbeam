@@ -453,7 +453,7 @@ Each item in the list is a, s3-to-s3 backup to perform, where:
 * **srcRegion** is the S3 region in which `srcBucket` resides. Optional.
 * **srcEndpoint** is the S3 API endpoint to use for the source bucket. Optional, defaults to AWS S3.
 * **delete** specifies if files not present in the source bucket should be deleted in the target bucket. Optional, defaults to true.
-* **method** specifies the command to use to perform the sync. Must be `awcli` or `s3cmd`. Optional, default is `s3cmd`.
+* **method** specifies the command to use to perform the sync. Must be `awcli`, `gsutil` or `s3cmd`. Optional, default is `s3cmd`.
 
 By design, the S3-to-S3 backup is always performed *last* in Tractorbeam. This allows you to mirror previous backups easily.
 
