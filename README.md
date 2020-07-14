@@ -2,11 +2,11 @@
 
 Open source, multi-tier website backups to S3.
 
-Tractorbeam is a Docker container that can backup data from a variety of sources to an S3-compatible object store such as AWS, DigitalOcean Spaces, Google Cloud, Ceph, and more.  All libraries and utilities are already in the container, so there's nothing more to install.
+Tractorbeam is a Docker container that can back up data from a variety of sources to an S3-compatible object store such as AWS, DigitalOcean Spaces, Google Cloud, Ceph, and more.  All libraries and utilities are already in the container, so there's nothing more to install.
 
 ## Multi-tier backups
 
-This container also creates "multi-tier" backups in a best-practice fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
+This container also creates "multi-tier" backups in a best practice fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
 
 ```
 my/custom/prefix
@@ -21,13 +21,13 @@ my/custom/prefix
 Each directory only retains a set number of files by default:
 * **daily** stores daily backups, up to the last seven days.
 * **weekly** stores weekly backups, taken once a week, up to the last 4 weeks.
-* **monthly** stores monthly backups, taken once a week, up to the last 12 months.
+* **monthly** stores monthly backups, taken once a month, up to the last 12 months.
 
-This reduces the overall amount of storage you require, while still providing you sufficient coverage for auditing or disaster recovery.
+This reduces the overall amount of storage required, while still providing sufficient coverage for auditing or disaster recovery.
 
 ## Use
 
-This container runs as a single-shot, and does not stay resident intentionally. Instead, you need to run the container regularly as part of a external scheduler. For Kubernetes, define a `cronjob` to run the container:
+This container runs as a single shot, and does not stay resident intentionally. Instead, you need to run the container regularly as part of a external scheduler. For Kubernetes, define a `cronjob` to run the container:
 
 ```yaml
 apiVersion: batch/v1beta1
