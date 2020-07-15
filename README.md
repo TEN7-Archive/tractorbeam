@@ -1,6 +1,8 @@
-# Tractorbeam Backup
+<img src="images/Tractorbeam.svg" width="450" />
 
-Open source, multi-tier website backups to S3.
+# Tractorbeam
+
+## Open source, multi-tier website backups
 
 Tractorbeam is a Docker container that can back up data from a variety of sources to an S3-compatible object store such as AWS, DigitalOcean Spaces, Google Cloud, Ceph, and more.  All libraries and utilities are already in the container, so there's nothing more to install.
 
