@@ -32,7 +32,7 @@ Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and c
     + [Backing up Pantheon files](#backing-up-pantheon-files)
     + [Backing up Platform.sh file mounts](#backing-up-platformsh-file-mounts)
     + [Backing up S3 Buckets](#backing-up-s3-buckets)
-  * [Deployment and Backup Schedule Configuration](#deployment-and-backup-schedule-configuration)
+  * [Deployment](#deployment)
     + [Kubernetes](#kubernetes)
     + [Docker Compose](#docker-compose)
   * [Part of Flight Deck](#part-of-flight-deck)
