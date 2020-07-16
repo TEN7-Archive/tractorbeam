@@ -9,6 +9,20 @@ Tractorbeam is a Docker container that can back up data from a variety of source
 ## Built with love by TEN7
 Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and care for Drupal-powered websites. 
 
+## How Tractorbeam works, the short version
+Tractorbeam is a powerful product, but there’s no GUI (yet), so you need a bit of technical knowledge to set up:
+* the Docker container to hold Tractorbeam
+* setting up the schedule it runs on
+* the YAML file that tells Tractorbeam which information to back up
+* the S3 destinations
+
+Here’s how Tractorbeam works:
+* You set up a Docker container, and install Tractorbeam into it. 
+* You configure a YAML document that tells Tractorbeam which sites you want to back up.
+* You configure the Docker container to run whatever backup frequency schedule you want Tractorbeam to run on.
+* At the backup time, the Docker container will read that YAML document, parse where the sources of data are that it needs to back up, grab those sources.
+* Tractorbeam will push the backups to any S3-compatible hosting provider. 
+
 ## Multi-tier backups
 
 This container also creates "multi-tier" backups in a best practice fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
