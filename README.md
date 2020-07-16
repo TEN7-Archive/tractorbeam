@@ -11,8 +11,8 @@ Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and c
 
 # Table of Contents
   * [How Tractorbeam works, the short version](#how-tractorbeam-works--the-short-version)
-  * [Multi-tier backups](#multi-tier-backups)
   * [Use](#use)
+    + [Multi-tier backups](#multi-tier-backups)
   * [Configuration](#configuration)
     + [Specifying the backup target](#specifying-the-backup-target)
     + [Using separate files for credentials](#using-separate-files-for-credentials)
@@ -55,27 +55,6 @@ Here’s how Tractorbeam works:
 4. At the backup time, the Docker container will read that YAML document, parse where the sources of data are that it needs to back up, grab those sources.
 5. Tractorbeam prunes old local backups before pushing backups to any S3-compatible hosting provider. 
 
-## Multi-tier backups
-
-This container also creates "multi-tier" backups in a best practice fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
-
-```
-my/custom/prefix
-  ├── daily
-  │   ├── flight_deck_test_db_20XX0101120000.sql.gz
-  │   ...
-  │   └── flight_deck_test_db_20XX0107120000.sql.gz
-  ├── monthly
-  └── weekly
-```
-
-Each directory only retains a set number of files by default:
-* **daily** stores daily backups, up to the last seven days.
-* **weekly** stores weekly backups, taken once a week, up to the last 4 weeks.
-* **monthly** stores monthly backups, taken once a month, up to the last 12 months.
-
-This reduces the overall amount of storage required, while still providing sufficient coverage for auditing or disaster recovery.
-
 ## Use
 
 This container runs as a single shot, and does not stay resident intentionally. Instead, you need to run the container regularly as part of a external scheduler. For Kubernetes, define a `cronjob` to run the container:
@@ -101,6 +80,27 @@ spec:
 ```
 
 For Docker Compose, you can attach a `docker-compose run` command to the Docker host's normal cronjob system.
+
+### Multi-tier backups
+
+This container also creates "multi-tier" backups in a best practice fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
+
+```
+my/custom/prefix
+  ├── daily
+  │   ├── flight_deck_test_db_20XX0101120000.sql.gz
+  │   ...
+  │   └── flight_deck_test_db_20XX0107120000.sql.gz
+  ├── monthly
+  └── weekly
+```
+
+Each directory only retains a set number of files by default:
+* **daily** stores daily backups, up to the last seven days.
+* **weekly** stores weekly backups, taken once a week, up to the last 4 weeks.
+* **monthly** stores monthly backups, taken once a month, up to the last 12 months.
+
+This reduces the overall amount of storage required, while still providing sufficient coverage for auditing or disaster recovery.
 
 ## Configuration
 
