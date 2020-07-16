@@ -9,9 +9,8 @@ Tractorbeam is a Docker container that can back up data from a variety of source
 ## Built with love by TEN7
 Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and care for Drupal-powered websites. 
 
+# Table of Contents
 - [Tractorbeam](#tractorbeam)
-  * [Open source, multi-tier website backups](#open-source--multi-tier-website-backups)
-  * [Built with love by TEN7](#built-with-love-by-ten7)
   * [How Tractorbeam works, the short version](#how-tractorbeam-works--the-short-version)
   * [Multi-tier backups](#multi-tier-backups)
   * [Use](#use)
