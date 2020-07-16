@@ -510,7 +510,7 @@ By design, the S3-to-S3 backup is always performed *last* in Tractorbeam. This a
 
 Note that Tractorbeam uses [s3cmd](https://s3tools.org/s3cmd) instead of the AWS CLI to perform the sync by default. s3cmd works slightly faster, and handles deep directories better. If you experience problems, you may fall back to the AWS CLI
 
-## Deployment and Backup Schedule Configuration
+## Deployment
 
 Tractorbeam may be deployed in several ways, including base Docker, Docker Compose, Swarm, and Kubernetes.
 
