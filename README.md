@@ -1,52 +1,10 @@
-<img src="images/Tractorbeam.svg" width="450" />
+![Tractorbeam logo with tag 'Open source multi-tier website backups'](images/Tractorbeam.svg)
 
 # Tractorbeam
 
-## Open source, multi-tier website backups
+## Open source multi-tier website backups
 
-Tractorbeam is a Docker container that can back up data from a variety of sources to an S3-compatible object store such as AWS, DigitalOcean Spaces, Google Cloud, Ceph, and more.  All libraries and utilities are already in the container, so there's nothing more to install.
-
-## Built with love by TEN7
-Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and care for Drupal-powered websites. 
-
-# Table of Contents
-  * [How Tractorbeam works, the short version](#how-tractorbeam-works--the-short-version)
-  * [Use](#use)
-    + [Multi-tier backups](#multi-tier-backups)
-  * [Configuration](#configuration)
-    + [Specifying the backup target](#specifying-the-backup-target)
-    + [Using separate files for credentials](#using-separate-files-for-credentials)
-    + [Specifying the region](#specifying-the-region)
-    + [Using alternate endpoints](#using-alternate-endpoints)
-    + [Completion pings](#completion-pings)
-    + [Disabling a backup](#disabling-a-backup)
-  * [Backing up databases](#backing-up-databases)
-    + [Backing up MySQL/MariaDB](#backing-up-mysql-mariadb)
-    + [Backing up from Pantheon.io](#backing-up-from-pantheonio)
-    + [Backing up Platform.sh DB relationships](#backing-up-platformsh-db-relationships)
-  * [Backing up files](#backing-up-files)
-    + [Backing up files over SSH](#backing-up-files-over-ssh)
-  * [Rolling directory backups](#rolling-directory-backups)
-    + [Caching files for rolling backups](#caching-files-for-rolling-backups)
-    + [Rolling backup of files over SSH](#rolling-backup-of-files-over-ssh)
-    + [Backing up Pantheon files](#backing-up-pantheon-files)
-    + [Backing up Platform.sh file mounts](#backing-up-platformsh-file-mounts)
-    + [Backing up S3 Buckets](#backing-up-s3-buckets)
-  * [Deployment](#deployment)
-    + [Kubernetes](#kubernetes)
-    + [Docker Compose](#docker-compose)
-  * [Part of Flight Deck](#part-of-flight-deck)
-  * [Debugging](#debugging)
-  * [License](#license)
-
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
-## How Tractorbeam works, the short version
-Tractorbeam is a powerful product, but there’s no GUI (yet), so you need a bit of technical knowledge to:
-* set up the Docker container to hold Tractorbeam
-* configure Docker to run Tractorbeam at the desired frequency
-* write the YAML file that tells Tractorbeam which information to back up
-* set up the S3 stores (or other destinations)
+[Tractorbeam](https://tractorbeam.me/) is a Docker container that can back up data from a variety of sources to an S3-compatible object store such as AWS, [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/?refcode=5fb69d9c62e4), Google Cloud, Ceph, and more.  All libraries and utilities are already in the container, so there's nothing more to install.
 
 Here’s how Tractorbeam works:
 1. Set up a Docker container, and install Tractorbeam into it. 
@@ -54,6 +12,38 @@ Here’s how Tractorbeam works:
 3. Configure the Docker container to run whatever backup frequency schedule you want Tractorbeam to run on.
 4. At the backup time, the Docker container will read that YAML document, parse where the sources of data are that it needs to back up, grab those sources.
 5. Tractorbeam prunes old local backups before pushing backups to any S3-compatible hosting provider. 
+
+## Built with love by TEN7
+
+Tractorbeam is built, used and supported by [TEN7](https://ten7.com/). We create and care for Drupal-powered websites. We built this for ourselves and use it in production with numerous clients hosted with us at [DigitalOcean](https://m.do.co/c/5fb69d9c62e4), Pantheon and [platform.sh](https://platform.sh/). More info is at [tractorbeam.me](https://tractorbeam.me/) 
+
+## Part of Flight Deck
+
+This container is a part of the [Flight Deck](https://github.com/ten7/flight-deck) library of containers for Drupal local development and production workloads on Docker, Swarm and Kubernetes. Flight Deck is also built, used and supported by [TEN7](https://ten7.com/).
+
+## License
+
+Tractorbeam is licensed under GPLv3. See [LICENSE](LICENSE) for the complete language.
+
+# Getting started
+
+Tractorbeam is powerful, but there’s no GUI for it so you need some technical knowledge to:
+* set up the Tractorbeam Docker container
+* configure a scheduled job (cronjob) that executes the containers periodically
+* write the YAML file that tells Tractorbeam which information to back up
+* set up the S3-compatible object stores
+
+This should get you started: 
+* [Use](#use)
+* [Configuration](#configuration)
+* [Backing up databases](#backing-up-databases)
+* [Backing up files](#backing-up-files)
+* [Rolling directory backups](#rolling-directory-backups)
+* [Deployment](#deployment)
+* [Part of Flight Deck](#part-of-flight-deck)
+* [Debugging](#debugging)
+
+Need help? Please [create a new Github issue](https://github.com/ten7/tractorbeam/issues/new).
 
 ## Use
 
@@ -119,8 +109,8 @@ tractorbeam:
 Where:
 
 * **databases** is a list of locally accessible MySQL/MariaDB databases to back up to S3.
-* **platformshDatabases** is a list of [Platform.sh](https://platform.sh) database relationships to back up to S3.
-* **platformshFiles** is a list of [Platform.sh](https://platform.sh) file mounts to back up to S3.
+* **platformshDatabases** is a list of [platform.sh](https://platform.sh) database relationships to back up to S3.
+* **platformshFiles** is a list of [platform.sh](https://platform.sh) file mounts to back up to S3.
 * **archives** is a list of SSH-accessible (SSH, SFTP, rsync-over-ssh) directories from which to create a snapshot archive, and upload to S3.
 * **files** is a list SSH-accessible files to perform a rolling directory backup to S3.
 * **s3** is a list of backups to duplicate files between S3 buckets.
@@ -284,7 +274,7 @@ Where:
 
 * **passwordFile** is the full path inside the container to a file containing the database password.
 
-### Backing up from Pantheon.io
+### Backing up from Pantheon
 
 Tractorbeam can create backups and upload them off-site to an S3 bucket:
 
@@ -303,19 +293,19 @@ tractorbeam:
       endpoint: "https://sfo2.digitaloceanspaces.com"
 ```
 
-* **site** is the site ID on Pantheon.io. Required.
+* **site** is the site ID on Pantheon. Required.
 * **environment** is the environment to back up. Optional, defaults to `master`.
 * **element** is type of backup to perform. This can be `database` or `files`. Optional, defaults to `database`.
-* **machineTokenFile** is the full path inside the container to a file containing the [Pantheon.io machine token](https://pantheon.io/docs/machine-tokens). Required.
-* **machineToken** is your Pantheon.io machine token. Optional if `machineTokenFile` is defined.
+* **machineTokenFile** is the full path inside the container to a file containing the [Pantheon machine token](https://pantheon.io/docs/machine-tokens). Required.
+* **machineToken** is your Pantheon machine token. Optional if `machineTokenFile` is defined.
 
 Note that unlike many other backup types, Pantheon backups can be either the database or files. Files are backed up as a dated archive and not a rolling directory of files.
 
-Note that you can associate multiple SSH keys with your Pantheon.io account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
+Note that you can associate multiple SSH keys with your Pantheon account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
 
-### Backing up Platform.sh DB relationships
+### Backing up platform.sh DB relationships
 
-This container can also back up a database relationship on your Platform.sh project to S3:
+This container can also back up a database relationship on your platform.sh project to S3:
 
 ```yaml
 tractorbeam:
@@ -332,14 +322,14 @@ tractorbeam:
       endpoint: "https://sfo2.digitaloceanspaces.com"
 ```
 
-* **project** is the project ID on Platform.sh. Required.
+* **project** is the project ID on platform.sh. Required.
 * **environment** is the environment to back up. Optional, defaults to `master`.
 * **relationship** is the name of the database relationship to back up. Required.
-* **cliTokenFile** is the full path inside the container to a file containing the [Platform.sh CLI token](https://docs.platform.sh/gettingstarted/cli/api-tokens.html). Optional.
-* **cliToken** is your Platform.sh CLI token. Optional if `cliTokenFile` is defined.
-* **identityFile** is the full path inside the container to an SSH private key associated with your Platform.sh account. The public key must be in the same directory. Required.
+* **cliTokenFile** is the full path inside the container to a file containing the [platform.sh CLI token](https://docs.platform.sh/gettingstarted/cli/api-tokens.html). Optional.
+* **cliToken** is your platform.sh CLI token. Optional if `cliTokenFile` is defined.
+* **identityFile** is the full path inside the container to an SSH private key associated with your platform.sh account. The public key must be in the same directory. Required.
 
-Note that you can associate multiple SSH keys with your Platform.sh account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
+Note that you can associate multiple SSH keys with your platform.sh account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
 
 ## Backing up files
 
@@ -445,11 +435,11 @@ Note, it is best to always create a dedicated SSH key for Tractorbeam, rather th
 
 ### Backing up Pantheon files
 
-See the Backing up from Pantheon.io section above.
+See the [Backing up from Pantheon section](#backing-up-from-pantheon) above.
 
-### Backing up Platform.sh file mounts
+### Backing up platform.sh file mounts
 
-This container can also back up a file mount on your Platform.sh project to S3:
+This container can also back up a file mount on your platform.sh project to S3:
 
 ```yaml
 tractorbeam:
@@ -466,14 +456,14 @@ tractorbeam:
       endpoint: "https://sfo2.digitaloceanspaces.com"
 ```
 
-* **project** is the project ID on Platform.sh. Required.
+* **project** is the project ID on platform.sh. Required.
 * **environment** is the environment to back up. Optional, defaults to `master`.
 * **mount** is the name of the file mount from `platform mounts` to back up. Required.
-* **cliTokenFile** is the full path inside the container to a file containing the [Platform.sh CLI token](https://docs.platform.sh/gettingstarted/cli/api-tokens.html). Optional.
-* **cliToken** is your Platform.sh CLI token. Optional if `cliTokenFile` is defined.
-* **identityFile** is the full path inside the container to an SSH private key associated with your Platform.sh account. The public key must be in the same directory. Required.
+* **cliTokenFile** is the full path inside the container to a file containing the [platform.sh CLI token](https://docs.platform.sh/gettingstarted/cli/api-tokens.html). Optional.
+* **cliToken** is your platform.sh CLI token. Optional if `cliTokenFile` is defined.
+* **identityFile** is the full path inside the container to an SSH private key associated with your platform.sh account. The public key must be in the same directory. Required.
 
-Note that you can associate multiple SSH keys with your Platform.sh account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
+Note that you can associate multiple SSH keys with your platform.sh account. It is highly recommended to create a dedicated key for Tractorbeam, rather than share your existing key.
 
 ### Backing up S3 Buckets
 
@@ -583,12 +573,6 @@ services:
     command: ["tractorbeam", "daily"]
 ```
 
-## Part of Flight Deck
-
-This container is part of the [Flight Deck library](https://github.com/ten7/flight-deck) of containers for Drupal local development and production workloads on Docker, Swarm and Kubernetes.
-
-Flight Deck is used and supported by [TEN7](https://ten7.com/).
-
 ## Debugging
 
 If you need to get verbose output from the entrypoint, set `flightdeck_debug` to `true` or `yes` in the config file.
@@ -600,7 +584,3 @@ flightdeck_debug: yes
 This container uses [Ansible](https://www.ansible.com/) to perform start-up tasks. To get even more verbose output from the start up scripts, set the `ANSIBLE_VERBOSITY` environment variable to `4`.
 
 If the container will not start due to a failure of the entrypoint, set the `FLIGHTDECK_SKIP_ENTRYPOINT` environment variable to `true` or `1`, then restart the container.
-
-## License
-
-Tractorbeam is licensed under GPLv3. See [LICENSE](https://raw.githubusercontent.com/ten7/flight-deck/master/LICENSE) for the complete language.
