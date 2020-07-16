@@ -6,6 +6,9 @@
 
 Tractorbeam is a Docker container that can back up data from a variety of sources to an S3-compatible object store such as AWS, DigitalOcean Spaces, Google Cloud, Ceph, and more.  All libraries and utilities are already in the container, so there's nothing more to install.
 
+## Built with love by TEN7
+Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and care for Drupal-powered websites. 
+
 ## Multi-tier backups
 
 This container also creates "multi-tier" backups in a best practice fashion. Instead of creating only a linear series of backups, Tractorbeam creates a directory structure:
