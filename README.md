@@ -9,6 +9,40 @@ Tractorbeam is a Docker container that can back up data from a variety of source
 ## Built with love by TEN7
 Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and care for Drupal-powered websites. 
 
+- [Tractorbeam](#tractorbeam)
+  * [Open source, multi-tier website backups](#open-source--multi-tier-website-backups)
+  * [Built with love by TEN7](#built-with-love-by-ten7)
+  * [How Tractorbeam works, the short version](#how-tractorbeam-works--the-short-version)
+  * [Multi-tier backups](#multi-tier-backups)
+  * [Use](#use)
+  * [Configuration](#configuration)
+    + [Specifying the backup target](#specifying-the-backup-target)
+    + [Using separate files for credentials](#using-separate-files-for-credentials)
+    + [Specifying the region](#specifying-the-region)
+    + [Using alternate endpoints](#using-alternate-endpoints)
+    + [Completion pings](#completion-pings)
+    + [Disabling a backup](#disabling-a-backup)
+  * [Backing up databases](#backing-up-databases)
+    + [Backing up MySQL/MariaDB](#backing-up-mysql-mariadb)
+    + [Backing up from Pantheon.io](#backing-up-from-pantheonio)
+    + [Backing up Platform.sh DB relationships](#backing-up-platformsh-db-relationships)
+  * [Backing up files](#backing-up-files)
+    + [Backing up files over SSH](#backing-up-files-over-ssh)
+  * [Rolling directory backups](#rolling-directory-backups)
+    + [Caching files for rolling backups](#caching-files-for-rolling-backups)
+    + [Rolling backup of files over SSH](#rolling-backup-of-files-over-ssh)
+    + [Backing up Pantheon files](#backing-up-pantheon-files)
+    + [Backing up Platform.sh file mounts](#backing-up-platformsh-file-mounts)
+    + [Backing up S3 Buckets](#backing-up-s3-buckets)
+  * [Deployment](#deployment)
+    + [Kubernetes](#kubernetes)
+    + [Docker Compose](#docker-compose)
+  * [Part of Flight Deck](#part-of-flight-deck)
+  * [Debugging](#debugging)
+  * [License](#license)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 ## How Tractorbeam works, the short version
 Tractorbeam is a powerful product, but there’s no GUI (yet), so you need a bit of technical knowledge to:
 * set up the Docker container to hold Tractorbeam
@@ -17,11 +51,11 @@ Tractorbeam is a powerful product, but there’s no GUI (yet), so you need a bit
 * set up the S3 stores (or other destinations)
 
 Here’s how Tractorbeam works:
-* Set up a Docker container, and install Tractorbeam into it. 
-* Cnfigure a YAML document that tells Tractorbeam which sites you want to back up.
-* Configure the Docker container to run whatever backup frequency schedule you want Tractorbeam to run on.
-* At the backup time, the Docker container will read that YAML document, parse where the sources of data are that it needs to back up, grab those sources.
-* Tractorbeam will push the backups to any S3-compatible hosting provider. 
+1. Set up a Docker container, and install Tractorbeam into it. 
+2. Configure a YAML document that tells Tractorbeam which sites you want to back up.
+3. Configure the Docker container to run whatever backup frequency schedule you want Tractorbeam to run on.
+4. At the backup time, the Docker container will read that YAML document, parse where the sources of data are that it needs to back up, grab those sources.
+5. Tractorbeam prunes old local backups before pushing backups to any S3-compatible hosting provider. 
 
 ## Multi-tier backups
 
