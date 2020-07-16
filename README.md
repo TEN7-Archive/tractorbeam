@@ -32,7 +32,7 @@ Tractorbeam is built and supported by [TEN7](https://ten7.com/). We create and c
     + [Backing up Pantheon files](#backing-up-pantheon-files)
     + [Backing up Platform.sh file mounts](#backing-up-platformsh-file-mounts)
     + [Backing up S3 Buckets](#backing-up-s3-buckets)
-  * [Deployment](#deployment)
+  * [Deployment and Backup Schedule Configuration](#deployment-and-backup-schedule-configuration)
     + [Kubernetes](#kubernetes)
     + [Docker Compose](#docker-compose)
   * [Part of Flight Deck](#part-of-flight-deck)
@@ -510,7 +510,7 @@ By design, the S3-to-S3 backup is always performed *last* in Tractorbeam. This a
 
 Note that Tractorbeam uses [s3cmd](https://s3tools.org/s3cmd) instead of the AWS CLI to perform the sync by default. s3cmd works slightly faster, and handles deep directories better. If you experience problems, you may fall back to the AWS CLI
 
-## Deployment
+## Deployment and Backup Schedule Configuration
 
 Tractorbeam may be deployed in several ways, including base Docker, Docker Compose, Swarm, and Kubernetes.
 
@@ -585,7 +585,7 @@ services:
 
 ## Part of Flight Deck
 
-This container is part of the [Flight Deck library](https://github.com/ten7/flight-deck) of containers for Drupal local development and production workloads on Docker, Swarm, and Kubernetes.
+This container is part of the [Flight Deck library](https://github.com/ten7/flight-deck) of containers for Drupal local development and production workloads on Docker, Swarm and Kubernetes.
 
 Flight Deck is used and supported by [TEN7](https://ten7.com/).
 
