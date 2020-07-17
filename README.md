@@ -38,7 +38,6 @@ This should get you started:
 * [Backing up files](#backing-up-files)
 * [Rolling directory backups](#rolling-directory-backups)
 * [Deployment](#deployment)
-* [Part of Flight Deck](#part-of-flight-deck)
 * [Debugging](#debugging)
 
 Need help? Please [create a new Github issue](https://github.com/ten7/tractorbeam/issues/new).
