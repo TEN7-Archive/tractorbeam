@@ -1,5 +1,3 @@
-![Tractorbeam logo with tag 'Open source multi-tier website backups'](images/Tractorbeam.svg)
-
 # Tractorbeam
 
 ## Open source multi-tier website backups
