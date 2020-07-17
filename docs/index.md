@@ -10,7 +10,7 @@ We couldn’t find a backup solution that did everything we needed so we built o
 
 *   **Tractorbeam does automated multi-tier backups daily, weekly and monthly, or any time schedule you choose.**  \
 By default, Tractorbeam keeps seven daily backups, four weekly backups and twelve monthly backups. You could even configure the Docker container that runs Tractorbeam to run hourly backups. 
-*   **Tractorbeam can write backups to any S3-compatible hosting provider, including Amazon AWS and Google Cloud. ** \
+*   **Tractorbeam can write backups to any S3-compatible hosting provider, including Amazon AWS and Google Cloud.** \
 Tractorbeam can write backups to any S3 or Rsync destination you choose, 
 *   **Tractorbeam keeps a set number of backups per timescale.**  \
 The value of a backup decreases the older it gets. If you have a website problem you’re likely going to discover it pretty quickly, so the most recent backups are what you need. Unlike other rolling backup solutions, Tractorbeam automatically prunes old backups before it uploads them to S3 locations to save space. 
