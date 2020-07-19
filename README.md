@@ -1,4 +1,4 @@
-![Tractorbeam logo UFO Saucer](tractorbeam-saucer.png)
+![Tractorbeam wordmark logo, grey on white](tractorbeam-grey-wordmark.svg)
 
 # Tractorbeam
 
