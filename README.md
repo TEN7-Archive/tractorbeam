@@ -21,3 +21,8 @@ Tractorbeam is open source and licensed under the [GNU General Public License v3
 ## Built with love by TEN7
 
 Built and supported by [TEN7](https://ten7.com/), Tractorbeam is used in production on websites hosted at [DigitalOcean](https://m.do.co/c/5fb69d9c62e4), [Pantheon](https://pantheon.io/) and [platform.sh](https://platform.sh/).
+
+
+## Support
+
+For support, please visit [tractorbeam.me/support](https://tractorbeam.me/support/)
