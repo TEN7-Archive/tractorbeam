@@ -27,6 +27,7 @@
         - "py3-mysqlclient"
         - "py3-pip"
         - "rsync"
+        - "rclone"
         - "tree"
       notify:
         - clear apk cache

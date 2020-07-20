@@ -107,6 +107,8 @@
       s3/awscli.yml\
       {% elif _backup.method | default('s3cmd') == 'gsutil' %}\
       s3/gsutil.yml\
+      {% elif _backup.method | default('s3cmd') == 'rclone' %}\
+      s3/rclone.yml\
       {% else %}\
       s3/s3cmd.yml\
       {% endif %}"
