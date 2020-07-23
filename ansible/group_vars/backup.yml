@@ -14,5 +14,5 @@ flightdeck_users:
 flightdeck_root_prompt: '\u@tractorbeam:\w# '
 flightdeck_user_prompt: '\u@tractorbeam:\w$ '
 
-platformsh_cli_version: "v3.44.0"
+platformsh_cli_version: "v3.60.0"
 platformsh_cli_url: "https://github.com/platformsh/platformsh-cli/releases/download/{{ platformsh_cli_version }}/platform.phar"
