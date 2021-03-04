@@ -1,0 +1,64 @@
+---
+- name: Create a tempfile for the rclone config
+  tempfile:
+    prefix: "tractorbeam-local-"
+    suffix: ".conf"
+    state: file
+  register: _rclone_conf
+- name: Template the rclone conf
+  copy:
+    content: |
+      [source]
+      type = local
+      copy_links = false
+      links = false
+      skip_links = true
+      no_check_updated = true
+      case_sensitive = true
+      case_insensitive = false
+
+      [dest]
+      type = s3
+      provider = {{ _backup.provider | default('AWS') }}
+      env_auth = false
+      access_key_id = {{ _dest_access_key }}
+      secret_access_key = {{ _dest_secret_key }}
+      endpoint = {{ _backup.endpoint | default('') | regex_replace('[A-z]*://', '') }}
+      region = {{ _backup.region | default('') }}
+      acl = {{ _backup.acl | default('private') }}
+    dest: "{{ _rclone_conf.path }}"
+  vars:
+    _dest_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    _dest_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+- name: Sync files using rclone
+  shell: >
+    rclone sync
+    source:/{{ _backup.path }}/
+    dest:/{{ _backup.bucket }}/{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
+    --config="{{ _rclone_conf.path }}"
+    {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
+    --exclude="{{ _exclude }}"{{ '' }}
+    {% endfor %}
+    {% if _backup.delete | default(true) %}
+    --delete-during
+    {% endif %}
+    {% if (flightdeck_debug | default(false)) != true %}
+    --quiet
+    {% else %}
+    --verbose="4"
+    {% endif %}
+  register: _fromlocal_result
+  until: _fromlocal_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
+- include_tasks: "healhcheck.yml"

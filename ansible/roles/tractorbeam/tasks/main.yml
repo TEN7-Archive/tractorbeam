@@ -96,22 +96,27 @@
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
 #
+# Local file backups run second to last.
+#
+- name: Work with local files
+  include_tasks: "local.yml"
+  vars:
+    _retain_count: "{{ _backupSet.retainCount }}"
+  loop: "{{ tractorbeam.local | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+
+#
 # S3 to S3 backups always run last!
 #
 - name: Work with s3 backups
-  include_tasks: "{{ _task_file }}"
+  include_tasks: "s3.yml"
   vars:
     _retain_count: "{{ _backupSet.retainCount }}"
-    _task_file: "\
-      {% if _backup.method | default('s3cmd') == 'awscli' %}\
-      s3/awscli.yml\
-      {% elif _backup.method | default('s3cmd') == 'gsutil' %}\
-      s3/gsutil.yml\
-      {% elif _backup.method | default('s3cmd') == 'rclone' %}\
-      s3/rclone.yml\
-      {% else %}\
-      s3/s3cmd.yml\
-      {% endif %}"
   loop: "{{ tractorbeam.s3 | default([]) }}"
   loop_control:
     loop_var: _backup
