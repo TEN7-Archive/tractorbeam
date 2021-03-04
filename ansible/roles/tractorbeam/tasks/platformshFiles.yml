@@ -94,7 +94,7 @@
 - name: Sync files using rclone
   shell: >
     rclone sync
-    source:/{{ _backup.path }}/
+    source:/{{ _backup.cacheDir | default(_files_temp_dir.path) }}/
     dest:/{{ _backup.bucket }}/{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
     --config="{{ _rclone_conf.path }}"
     {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
@@ -156,7 +156,7 @@
 - name: Sync files using rclone
   shell: >
     rclone sync
-    source:/{{ _backup.cacheDir | default(_files_temp_dir.path) }}/
+    source:/{{ _backup.cacheDir | default(_platformshFiles_temp_dir.path) }}/
     dest:/{{ _backup.bucket }}/{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
     --config="{{ _rclone_conf.path }}"
     {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
