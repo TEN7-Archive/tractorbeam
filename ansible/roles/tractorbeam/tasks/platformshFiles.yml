@@ -49,43 +49,132 @@
       {% else %}\
       {{ _backup.cliToken }}\
       {% endif %}"
-- name: Sync directory to target S3
+
+- name: Create a tempfile for the rclone config
+  tempfile:
+    prefix: "tractorbeam-platformshFiles-"
+    suffix: ".conf"
+    state: file
+  register: _rclone_conf
+- name: Template the rclone conf
+  copy:
+    content: |
+      [source]
+      type = local
+      copy_links = false
+      links = false
+      skip_links = true
+      no_check_updated = true
+      case_sensitive = true
+      case_insensitive = false
+
+      [dest]
+      type = s3
+      provider = {{ _backup.provider | default('AWS') }}
+      env_auth = false
+      access_key_id = {{ _dest_access_key }}
+      secret_access_key = {{ _dest_secret_key }}
+      endpoint = {{ _backup.endpoint | default('') | regex_replace('[A-z]*://', '') }}
+      region = {{ _backup.region | default('') }}
+      acl = {{ _backup.acl | default('private') }}
+    dest: "{{ _rclone_conf.path }}"
+  vars:
+    _dest_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    _dest_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+- name: Sync files using rclone
   shell: >
-    s3cmd sync
+    rclone sync
+    source:/{{ _backup.path }}/
+    dest:/{{ _backup.bucket }}/{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
+    --config="{{ _rclone_conf.path }}"
     {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
     --exclude="{{ _exclude }}"{{ '' }}
     {% endfor %}
     {% if _backup.delete | default(true) %}
-    --delete-removed
+    --delete-during
     {% endif %}
     {% if (flightdeck_debug | default(false)) != true %}
     --quiet
-    {% elif lookup('env', 'ANSIBLE_VERBOSITY') == 4 %}
-    --debug
     {% else %}
-    --verbose
+    --verbose="4"
     {% endif %}
-    {% if _backup.endpoint is defined %}
-    --host="{{ _backup.endpoint | regex_replace('[A-z]*://', '') }}"
-    --host-bucket="{{ _backup.bucketUrl | default(_backup.bucket + '.' + _backup.endpoint) | regex_replace('[A-z]*://', '') }}"
+  register: _fromlocal_result
+  until: _fromlocal_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
+- include_tasks: "healhcheck.yml"- name: Create a tempfile for the rclone config
+  tempfile:
+    prefix: "tractorbeam-files-"
+    suffix: ".conf"
+    state: file
+  register: _rclone_conf
+- name: Template the rclone conf
+  copy:
+    content: |
+      [source]
+      type = local
+      copy_links = false
+      links = false
+      skip_links = true
+      no_check_updated = true
+      case_sensitive = true
+      case_insensitive = false
+
+      [dest]
+      type = s3
+      provider = {{ _backup.provider | default('AWS') }}
+      env_auth = false
+      access_key_id = {{ _dest_access_key }}
+      secret_access_key = {{ _dest_secret_key }}
+      endpoint = {{ _backup.endpoint | default('') | regex_replace('[A-z]*://', '') }}
+      region = {{ _backup.region | default('') }}
+      acl = {{ _backup.acl | default('private') }}
+    dest: "{{ _rclone_conf.path }}"
+  vars:
+    _dest_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    _dest_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
+- name: Sync files using rclone
+  shell: >
+    rclone sync
+    source:/{{ _backup.cacheDir | default(_files_temp_dir.path) }}/
+    dest:/{{ _backup.bucket }}/{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
+    --config="{{ _rclone_conf.path }}"
+    {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
+    --exclude="{{ _exclude }}"{{ '' }}
+    {% endfor %}
+    {% if _backup.delete | default(true) %}
+    --delete-during
     {% endif %}
-    {% if _backup.region is defined %}
-    --region="{{ _backup.region }}"
+    {% if (flightdeck_debug | default(false)) != true %}
+    --quiet
+    {% else %}
+    --verbose="4"
     {% endif %}
-    {% if _backup.accessKeyFile is defined %}
-    --access_key="{{ lookup('file', _backup.accessKeyFile) }}"
-    {% elif _backup.accessKey is defined %}
-    --access_key="{{ _backup.accessKey }}"
-    {% endif %}
-    {% if _backup.secretKeyFile is defined %}
-    --secret_key="{{ lookup('file', _backup.secretKeyFile) }}"
-    {% elif _backup.secretKey is defined %}
-    --secret_key="{{ _backup.secretKey }}"
-    {% endif %}
-    --acl-private
-    --recursive
-    {{ _backup.cacheDir | default(_platformshFiles_temp_dir.path) }}/
-    s3://{{ _backup.bucket }}/{{ _backup.prefix }}/
+  register: _platformshFiles_result
+  until: _platformshFiles_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
+
 - name: Removed identity files in ~/.ssh
   file:
     path: "/home/backup/.ssh/{{ item | basename }}"
