@@ -9,8 +9,8 @@
 
       Known backupSets are: "{{ _backupSets.keys() | list | join(', ') }}"
   when:
-    - _backupSets[tractorbeam_scope] is not defined
-- name: Get the backupSet.
+    - (tractorbeam_scope is not defined) or (tractorbeam_scope not in _backupSets)
+- name: Get the backupSet {{ tractorbeam_scope | default() }}.
   set_fact:
     _backupSet: "{{ _backupSets[tractorbeam_scope] }}"
 #

@@ -1,29 +1,17 @@
 #!/usr/bin/env bash
 
 case "$1" in
-  daily)
-    if [ -f "/config/tractorbeam/tractorbeam.yml" ]; then
-      ansible-playbook -i /ansible/inventories/all.ini -e "@/config/tractorbeam/tractorbeam.yml" /ansible/backup-daily.yml
-    else
-      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-daily.yml
-    fi
-    ;;
-  weekly)
-    if [ -f "/config/tractorbeam/tractorbeam.yml" ]; then
-      ansible-playbook -i /ansible/inventories/all.ini -e "@/config/tractorbeam/tractorbeam.yml" /ansible/backup-weekly.yml
-    else
-      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-weekly.yml
-    fi
-    ;;
-  monthly)
-    if [ -f "/config/tractorbeam/tractorbeam.yml" ]; then
-      ansible-playbook -i /ansible/inventories/all.ini -e "@/config/tractorbeam/tractorbeam.yml" /ansible/backup-monthly.yml
-    else
-      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup-monthly.yml
-    fi
-    ;;
-  *)
-    echo $"Usage: $0 {daily|weekly|monthly}"
+  "")
+    echo $"Usage: $0 {backup_set_name}"
     exit 1
+    ;;
+
+  *)
+    if [ -f "/config/tractorbeam/tractorbeam.yml" ]; then
+      ansible-playbook -i /ansible/inventories/all.ini  -e "@/config/tractorbeam/tractorbeam.yml" -e "tractorbeam_scope=${1}" /ansible/backup.yml
+    else
+      ansible-playbook -i /ansible/inventories/all.ini /ansible/backup.yml
+    fi
+    ;;
 
 esac
