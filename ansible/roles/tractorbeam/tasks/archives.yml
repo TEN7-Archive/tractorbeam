@@ -7,6 +7,7 @@
 - name: Generate the archive filename
   set_fact:
     _archive_file_name: "{{ _backup.archivePrefix }}{{ _backup_timestamp }}{{ _tractorbeam_archives_extensions[_format] }}"
+    _archive_latest_name: "{{ _backup.archivePrefix }}_latest{{ _tractorbeam_archives_extensions[_format] }}"
     _archive_file_regex: "{{ _backup.archivePrefix | regex_escape() }}[0-9]{14}{{ _tractorbeam_archives_extensions[_format] | regex_escape() }}"
   vars:
     _format: "{{ _backup.archiveFormat | default('gz') }}"
@@ -100,6 +101,30 @@
       {% endif %}"
     s3_url: "{{ _backup.endpoint | default(omit) }}"
   loop: "{{ _list_backup_sorted[:-(_retain_count | int)] }}"
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+- name: Push backup to S3 as latest
+  aws_s3:
+    bucket: "{{ _backup.bucket }}"
+    object: "{{ _backup.prefix | default('') }}/{{ _archive_latest_name }}"
+    src: "{{ _archives_temp_dir.path }}/{{ _archive_file_name }}"
+    mode: put
+    s3_url: "{{ _backup.endpoint | default(omit) }}"
+    region: "{{ _backup.region | default(omit) }}"
+    encrypt: no
+    permission: private
+    overwrite: yes
+    aws_access_key: "\
+      {% if _backup.accessKeyFile is defined %}\
+      {{ lookup('file', _backup.accessKeyFile) }}\
+      {% else %}\
+      {{ _backup.accessKey | default(omit) }}\
+      {% endif %}"
+    aws_secret_key: "\
+      {% if _backup.secretKeyFile is defined %}\
+      {{ lookup('file', _backup.secretKeyFile) }}\
+      {% else %}\
+      {{ _backup.secretKey | default(omit) }}\
+      {% endif %}"
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
 - name: delete stage directory
   file:
