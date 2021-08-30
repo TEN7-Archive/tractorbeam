@@ -40,6 +40,8 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
+
 - name: Work with pantheon backups
   include_tasks: "pantheon.yml"
   vars:
@@ -51,6 +53,8 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
+
 - name: Work with platform.sh databases
   include_tasks: "platformshDatabases.yml"
   vars:
@@ -62,6 +66,8 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
+
 - name: Work with archives
   include_tasks: "archives.yml"
   vars:
@@ -73,6 +79,8 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
+
 - name: Work with file backups
   include_tasks: "files.yml"
   vars:
@@ -84,6 +92,8 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
+
 - name: Work with platform.sh files
   include_tasks: "platformshFiles.yml"
   vars:
@@ -95,6 +105,7 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
 #
 # Local file backups run second to last.
 #
@@ -109,6 +120,7 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
 
 #
 # S3 to S3 backups always run last!
@@ -124,3 +136,4 @@
   when:
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"

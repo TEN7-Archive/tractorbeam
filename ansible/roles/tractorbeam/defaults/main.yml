@@ -1,3 +1,4 @@
 ---
 tractorbeam:
+  stop_on_failure: no
   databases: []
