@@ -26,6 +26,10 @@
     {% endif %}
     --no-interaction
     --yes
+  register: _pantheon_login_result
+  until: _pantheon_login_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
   vars:
     _auth: "\
       {% if _backup.machineTokenFile is defined %}\
@@ -45,6 +49,10 @@
     {% endif %}
     --no-interaction
     --yes
+  register: _pantheon_backup_result
+  until: _pantheon_backup_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
 - name: Get list of backups
   shell: >
     terminus backup:list
@@ -71,6 +79,10 @@
     {% endif %}
     --no-interaction
     --yes
+  register: _pantheon_download_result
+  until: _pantheon_download_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
   args:
     creates: "{{ _backup.cacheDir | default(_pantheon_temp_dir.path) }}/{{ _pantheon_backup_filename }}"
 - name: Push backup to S3

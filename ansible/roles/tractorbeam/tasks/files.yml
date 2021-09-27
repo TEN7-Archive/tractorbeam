@@ -32,6 +32,10 @@
     --chown=backup:backup
     {{ _backup.user }}@{{ _backup.src }}:{{ _backup.path }}/
     {{ _backup.cacheDir | default(_files_temp_dir.path) }}
+  register: _files_rsync_result
+  until: _files_rsync_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
 - name: Create a tempfile for the rclone config
   tempfile:
     prefix: "tractorbeam-files-"

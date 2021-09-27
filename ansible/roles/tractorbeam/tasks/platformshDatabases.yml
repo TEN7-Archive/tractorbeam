@@ -16,6 +16,10 @@
     {% if _backup.identityFile is defined %}
     --identity-file={{ _backup.identityFile }}
     {% endif %}
+  register: _platformshDatabases_backup_result
+  until: _platformshDatabases_backup_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
   environment:
     PLATFORMSH_CLI_TOKEN: "\

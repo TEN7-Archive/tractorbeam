@@ -41,6 +41,10 @@
     --environment={{ _backup.environment | default('master') }}
     --mount="{{ _backup.mount }}"
     --target="{{ _backup.cacheDir | default(_platformshFiles_temp_dir.path) }}/"
+  register: _platformshFiles_download_result
+  until: _platformshFiles_download_result.rc == 0
+  retries: "{{ _backup.retryCount | default(3) }}"
+  delay: "{{ _backup.retryDelay | default(30) }}"
   no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
   environment:
     PLATFORMSH_CLI_TOKEN: "\
