@@ -7,3 +7,4 @@
     validate_certs: no
   when:
     - _backup.healthcheckUrl is defined
+  ignore_errors: yes
