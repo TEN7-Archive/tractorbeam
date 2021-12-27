@@ -137,3 +137,19 @@
     - _backup.disabled | default(false) == false
     - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
   ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
+
+#
+# S3 to sftp always run last!
+#
+- name: Work with sftp backups
+  include_tasks: "sftp.yml"
+  vars:
+    _retain_count: "{{ _backupSet.retainCount }}"
+  loop: "{{ tractorbeam.sftp | default([]) }}"
+  loop_control:
+    loop_var: _backup
+  no_log: "{{ flightdeck_debug | default(false) | ternary(false, true) }}"
+  when:
+    - _backup.disabled | default(false) == false
+    - tractorbeam_scope in _backup.backupSets | default(_tractorbeam_default_sets_for_backup)
+  ignore_errors: "{{ tractorbeam.stop_on_failure | default(false) | bool }}"
