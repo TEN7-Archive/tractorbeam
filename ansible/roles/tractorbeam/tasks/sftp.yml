@@ -58,7 +58,7 @@
 - name: Sync files using rclone
   shell: >
     rclone sync
-    source:/{{ _backup.srcBucket }}/{% if _backup.srcPrefix is defined %}{{ _backup.srcPrefix }}/{% elif _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
+    source:/{{ _backup.srcBucket }}/{% if _backup.srcPrefix is defined %}{{ _backup.srcPrefix }}/{% endif %}
     dest:{% if _backup.prefix is defined %}{{ _backup.prefix }}/{% endif %}
     --config="{{ _rclone_conf.path }}"
     {% for _exclude in _backup.excludes | default(_tractorbeam_default_files_excludes) %}
